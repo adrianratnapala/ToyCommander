@@ -3,8 +3,15 @@
 function runCommand( text, responder ) {
         /* create a pane to return results into. */
         var pane    = document.createElement('div');
+        pane.setAttribute('class', 'pane');
         var resp    = document.createElement('div');
-        pane.appendChild( document.createTextNode(text) );
+        resp.setAttribute('class', 'response');
+
+        var command = document.createElement('div');
+        command.setAttribute('class', 'command');
+       
+        command.appendChild( document.createTextNode(text) );
+        pane.appendChild( command );
         pane.appendChild( resp );
 
         /* request results from server. */
@@ -56,6 +63,7 @@ function Commander(prev) {
         var command_form = document.createElement('form');
         var input_text = commandInput(this)
 
+        this.toplevel.setAttribute('class', 'commander');
         command_form.appendChild( input_text );
         toplevel.appendChild( command_form );
         document.body.appendChild(this.toplevel);
