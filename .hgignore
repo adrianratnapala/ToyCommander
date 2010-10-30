@@ -1,0 +1,12 @@
+syntax: glob
+*.dvi
+*.pyc
+*.aux
+*.toc
+*.btx
+*.log
+*.swo
+*.swp
+*.asy
+*.eps
+*.pdf
