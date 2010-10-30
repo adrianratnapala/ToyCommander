@@ -1,18 +1,22 @@
 
-// Runs the string "text", returns an DIV to catch the results. 
-function runCommand( text ) {
+// Runs the string "text", returns an DIV (pane) to catch the results. 
+function runCommand( text, responder ) {
+        /* create a pane to return results into. */
         var pane    = document.createElement('div');
-        var frame   = document.createElement('iframe');
-
-        frame.setAttribute('src', 'jabber.html');
-        frame.onload = function(){
-                frame.height = 
-                        frame.contentDocument.body.scrollHeight;
-        }
-
+        var resp    = document.createElement('div');
         pane.appendChild( document.createTextNode(text) );
-        pane.appendChild( document.createElement('br') );
-        pane.appendChild(frame);
+        pane.appendChild( resp );
+
+        /* request results from server. */
+        var xml_http = new XMLHttpRequest();
+        xml_http.open('GET', 'jabber.html', true);
+        xml_http.onreadystatechange = function(){
+                if (this.readyState != 4)
+                        return;
+                responder( resp, this.responseText );
+        }
+        xml_http.send();
+        
         return pane;
 }
 
@@ -22,14 +26,25 @@ function commandInput(commander) {
 
         input.setAttribute('type', 'input');
         input.setAttribute('name', 'input');
+
+        responder = function( resp, text ) {
+                resp.innerHTML = text;
+                input.focus();
+                window.scrollTo(0, input.offsetTop);
+        }  
+
         input.onkeydown = function(ev) {
                 if ( ev.keyCode != 13 /*RETURN*/ ) 
                         return;
-                pane = runCommand(this.value);
                 
-                document.body.insertBefore( pane, commander.toplevel );
-                input.focus();
-                return false; // swallow event, don't submit.
+                try {
+                        pane = runCommand(this.value, responder);
+
+                        document.body.insertBefore( pane, commander.toplevel );
+                        input.focus();
+                } finally {
+                        return false; // swallow event, don't submit.
+                }
         }
 
         return input;
