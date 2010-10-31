@@ -107,18 +107,20 @@ function runCommand( session, text, gotit_cb ) {
         pane = new Pane(session, text);
         receiver = pane.receiver;
 
-        function gotit() { if(gotit_cb) gotit_cb(pane.receiver); }
+        function gotit() { 
+                pane.show();
+                if(gotit_cb) 
+                        gotit_cb(pane.receiver); 
+        }
 
         if( uri  = commandToURI(session, text) ) {
                 requestURI( uri, function(resp) {
-                        receiver.appendChild(resp);
+                        pane.receiver = resp;
                         gotit();
                 })
         } else {
                 gotit();
         }
-
-        pane.show();
 
         ++session.command_id;
         return pane;
