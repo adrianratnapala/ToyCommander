@@ -7,38 +7,15 @@ function commandToURI(command) {
         return encodeURI(word0);
 }
 
-// Runs the string "text", returns an DIV (pane) to catch the results. 
-function runCommand( text, gotit_cb ) {
-        // create a pane to return results into. 
-        var pane    = document.createElement('div');
-        pane.setAttribute('class', 'pane');
-        var resp    = document.createElement('div');
-        resp.setAttribute('class', 'response');
-
-        var command = document.createElement('div');
-        command.setAttribute('class', 'command');
-       
-        command.appendChild( document.createTextNode(text) );
-        pane.appendChild( command );
-        pane.appendChild( resp );
-
+// Request uri and place the result inside receiver. Call gotit once done.
+function requestURI(receiver, uri, gotit) {
         var xml_http = new XMLHttpRequest();
-
-        function gotit() {
-                if(gotit_cb)
-                        gotit_cb(resp, xml_http);
-        }
-
-        if( !(uri = commandToURI(text)) ) {
-                gotit();
-                return pane;
-        }
 
         /* request results from server. */
         xml_http.onreadystatechange = function(){
                 switch(this.readyState) {
                 case 4:
-                        resp.innerHTML = this.responseText;
+                        receiver.innerHTML = this.responseText;
                         gotit()
                 }
         }
@@ -50,12 +27,40 @@ function runCommand( text, gotit_cb ) {
                 if(!e.code) {
                         throw e;
                 }
-                resp.setAttribute('class', 'error');
-                resp.innerHTML = 'REQUEST FAILED [' + e.code +']: '
-                                                    + e.message;
+                receiver.setAttribute('class', 'error');
+                receiver.innerHTML = 'REQUEST "' + uri + '" FAILED ['
+                                                 + e.code +']: '
+                                                 + e.message;
                 gotit();
         }
+}
+
+// Runs the string "text", returns an DIV (pane) to catch the results. 
+function runCommand( text, gotit_cb ) {
+        // create a pane to return results into. 
+        var pane     = document.createElement('div');
+        pane.setAttribute('class', 'pane');
+        var receiver = document.createElement('div');
+        receiver.setAttribute('class', 'response');
+
+        var command = document.createElement('div');
+        command.setAttribute('class', 'command');
+       
+        command.appendChild( document.createTextNode(text) );
+        pane.appendChild( command );
+        pane.appendChild( receiver );
         
+        function gotit() {
+                if(gotit_cb)
+                        gotit_cb(receiver);
+        }
+        
+        if( uri  = commandToURI(text) ) {
+                requestURI( receiver, commandToURI(text), gotit );
+        } else {
+                gotit();
+        }
+
         return pane;
 }
 
