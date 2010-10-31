@@ -89,7 +89,7 @@ function commandInput(session) {
 
                 pane = runCommand(session, input.value, function(){
                         input.focus();
-                        window.scrollTo(0, input.offsetTop);
+                        window.scrollTo(0, session.commander.offsetTop);
                 })
                 session.container.insertBefore(pane, session.commander);
         }
