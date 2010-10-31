@@ -43,9 +43,6 @@ function Pane(session, text)
         command.appendChild( prspan );
         command.appendChild( input );
 
-        this.receiver = document.createElement('div');
-        this.receiver.setAttribute('class', 'response');
-
         // create a pane to return results into. 
         this.pane     = document.createElement('div');
         this.pane.setAttribute('class', 'pane');
@@ -63,8 +60,10 @@ function Pane(session, text)
                 command.onclick = this.show;
         }
         this.show = function () {
-                this.pane.appendChild( this.receiver );
-                command.onclick = this.hide;
+                if( this.receiver ) {
+                        this.pane.appendChild( this.receiver );
+                        command.onclick = this.hide;
+                }
         }
 }
  
@@ -115,6 +114,8 @@ function runCommand( session, text, gotit_cb ) {
 
         if( uri  = commandToURI(session, text) ) {
                 requestURI( uri, function(resp) {
+                        if(pane.receiver)
+                                pane.pane.replaceChild(resp, pane.receiver );
                         pane.receiver = resp;
                         gotit();
                 })
