@@ -33,6 +33,7 @@ function commandInput(commander) {
 
         input.setAttribute('type', 'input');
         input.setAttribute('name', 'input');
+        input.setAttribute('class','command');
 
         responder = function( resp, text ) {
                 resp.innerHTML = text;
