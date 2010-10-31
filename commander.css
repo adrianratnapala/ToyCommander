@@ -18,8 +18,8 @@ div.command {
 } 
 
 input {
-        background-color:#222;
-        color:#afd;
+        background-color:#111;
+        color:#0f4;
         width:100%;
         border:0em;
 }
@@ -33,42 +33,9 @@ div.response {
 div.pane {
         background-color:#000000;
         margin:0px 0px 5px 0px;
-        border-color:#084;
+        border-color:red;
         border-style:none none solid none;
         border-width:2px;
 }
 
-/*
-a { text-decoration:none; }
-.age { white-space:nowrap; }
-.date { white-space:nowrap; }
-.indexlinks { white-space:nowrap; }
-.parity0 { background-color: #ddd; }
-.parity1 { background-color: #eee; }
-.lineno { width: 60px; color: #aaa; font-size: smaller;
-          text-align: right; }
-.plusline { color: green; }
-.minusline { color: red; }
-.atline { color: purple; }
-.annotate { font-size: smaller; text-align: right; padding-right: 1em; }
-.buttons a {
-  background-color: #666;
-  padding: 2pt;
-  color: white;
-  font-family: sans;
-  font-weight: bold;
-}
-.navigate a {
-  background-color: #ccc;
-  padding: 2pt;
-  font-family: sans;
-  color: black;
-}
 
-.metatag {
-  background-color: #888;
-  color: white;
-  text-align: right;
-}
-
-*/
