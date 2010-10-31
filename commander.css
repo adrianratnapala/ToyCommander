@@ -6,37 +6,34 @@ body {
         margin:0em;
 }
 
-.commander {
-        border-color:red;
-        border-style:solid none none none;
-        border-width:2px;
-}
-
-input {
-        background-color:#222;
-        color:#afd;
-        border:0em;
-        width:100%;
+.command {
+        background-color:#111;
 }
 
 div.command {
-        background-color:#222;
         color:yellow;
         font-style:italic;
         border:0em;
         width:100%;
 } 
 
+input {
+        background-color:#222;
+        color:#afd;
+        width:100%;
+        border:0em;
+}
+
 div.response {
         padding-left:5px;
-        background-color:#000000;
         border-style:solid;
         border-width:0px;
 }
 
 div.pane {
+        background-color:#000000;
         margin:0px 0px 5px 0px;
-        border-color:yellow;
+        border-color:#084;
         border-style:none none solid none;
         border-width:2px;
 }
