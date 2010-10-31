@@ -1,5 +1,14 @@
+// Converts command line text to a URL.
+function commandToURI(command) {
+        if( !command )
+                return;
+        
+        word0 = command.replace( /^\s*(\S+).*/, '$1');
+        return encodeURI(word0);
+}
+
 // Runs the string "text", returns an DIV (pane) to catch the results. 
-function runCommand( text, cb ) {
+function runCommand( text, gotit_cb ) {
         /* create a pane to return results into. */
         var pane    = document.createElement('div');
         pane.setAttribute('class', 'pane');
@@ -13,17 +22,37 @@ function runCommand( text, cb ) {
         pane.appendChild( command );
         pane.appendChild( resp );
 
-        /* request results from server. */
         var xml_http = new XMLHttpRequest();
-        xml_http.open('GET', 'jabber.html', true);
-        xml_http.onreadystatechange = function(){
-                if (this.readyState != 4)
-                        return;
-                resp.innerHTML = this.responseText;
-                if(cb)
-                        cb(resp, this);
+
+        function gotit() {
+                if(gotit_cb)
+                        gotit_cb(resp, xml_http);
         }
-        xml_http.send();
+
+        if( !(uri = commandToURI(text)) )
+                return gotit();
+
+        /* request results from server. */
+        xml_http.onreadystatechange = function(){
+                switch(this.readyState) {
+                case 4:
+                        resp.innerHTML = this.responseText;
+                        gotit()
+                }
+        }
+
+        try {
+                xml_http.open('GET', uri, true);
+                xml_http.send();
+        } catch(e) {
+                if(!e.code) {
+                        throw e;
+                }
+                resp.setAttribute('class', 'error');
+                resp.innerHTML = 'REQUEST FAILED [' + e.code +']: '
+                                                    + e.message;
+                gotit();
+        }
         
         return pane;
 }
@@ -37,7 +66,7 @@ function commandInput(commander) {
         input.setAttribute('class','command');
 
         function enter(ev) {
-                pane = runCommand(this.value, function(){
+                pane = runCommand(input.value, function(){
                         input.focus();
                         window.scrollTo(0, input.offsetTop);
                 })
@@ -49,6 +78,9 @@ function commandInput(commander) {
                 switch ( ev.keyCode ) {
                 case 13 /*RETURN*/:
                         try { enter(ev); } 
+                        catch(e) {
+                                alert(e);
+                        }
                         finally { return false; }
                 }
         }

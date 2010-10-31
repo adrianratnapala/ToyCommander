@@ -25,6 +25,11 @@ div.response {
         padding-left:5px;
 }
 
+.error {
+        color:red;
+}
+
+
 div.pane {
         background-color:#000000;
         margin:0px 0px 5px 0px;
