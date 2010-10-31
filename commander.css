@@ -6,7 +6,7 @@ body {
         margin:0em;
 }
 
-.command, .ocommand {
+.command, .ocommand, .hcommand {
         background-color:#111;
         border:0em;
         display:table;
@@ -20,12 +20,16 @@ input.command {
         display:table-cell;
 }
 
-.ocommand {
+.ocommand, .hcommand {
         color:yellow;
         font-style:italic;
 }
 span.ocommand {
         display:table-cell;
+}
+
+.hcommand {
+        background-color:#242;
 }
 
 .prompt, .oprompt {

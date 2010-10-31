@@ -37,6 +37,8 @@ function requestURI(receiver, uri, gotit) {
 
 // Runs the string "text", returns an DIV (pane) to catch the results. 
 function runCommand( session, text, gotit_cb ) {
+        id = session.command_id;
+
         var prspan = document.createElement('span');
         prspan.setAttribute( 'class', 'oprompt' );
         prspan.appendChild( createPrompt(session) );
@@ -57,9 +59,7 @@ function runCommand( session, text, gotit_cb ) {
         var pane     = document.createElement('div');
         pane.setAttribute('class', 'pane');
         pane.appendChild( command );
-        pane.appendChild( receiver );
 
-        
         function gotit() {
                 if(gotit_cb)
                         gotit_cb(receiver);
@@ -71,7 +71,29 @@ function runCommand( session, text, gotit_cb ) {
                 gotit();
         }
 
-        return pane;
+        // Closures really are very cool.
+        command.onmouseout = function() {
+                this.setAttribute('class', 'ocommand');
+        }
+        command.onmouseover = function() {
+                this.setAttribute('class', 'hcommand');
+        }
+        function hide() {
+                pane.removeChild( receiver );
+                command.onclick = show;
+        }
+        function show() {
+                pane.appendChild( receiver );
+                command.onclick = hide;
+        }
+        
+        show();
+
+        return {
+                pane : pane,
+                command : command,
+                receiver : receiver,
+        };
 }
 
 function createPrompt(session) {
@@ -99,11 +121,12 @@ function commandInput(session) {
                 prompt = createPrompt(session);
                 prspan.replaceChild( prompt, old_prompt );
 
+                // FIX: Naming
                 pane = runCommand(session, input.value, function(){
                         input.focus();
                         window.scrollTo(0, input.offsetTop);
                 })
-                session.container.insertBefore(pane, session.commander);
+                session.container.insertBefore(pane.pane, session.commander);
         }
 
         input.onkeydown = function(ev) { // Filter user keystrokes
