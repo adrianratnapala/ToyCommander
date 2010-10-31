@@ -93,33 +93,32 @@ function requestURI(uri, gotit) {
         } catch (e) {
                 if(!e.code) { throw e; }
                 gotit( html_to_DOM( true,
-                        'REQUEST "' + uri + '" FAILED ['
-                                          + e.code +']: '
-))                                        + e.message;
+                        'REQUEST "' + uri + '" FAILED [' + e.code +']: '
+                                          + e.message));
         }
 }
 
 
 // Runs the string "text", returns an DIV (pane) to catch the results. 
-function runCommand( session, text, gotit_cb ) {
+function runCommand( session, text, gotit ) {
         pane = new Pane(session, text);
         receiver = pane.receiver;
 
-        function gotit() { 
-                pane.show();
-                if(gotit_cb) 
-                        gotit_cb(pane.receiver); 
-        }
-
-        if( uri  = commandToURI(session, text) ) {
-                requestURI( uri, function(resp) {
+        function insert_result(resp) { 
+                if(resp) {
                         if(pane.receiver)
                                 pane.pane.replaceChild(resp, pane.receiver );
                         pane.receiver = resp;
-                        gotit();
-                })
+                }
+                pane.show();
+                if(gotit) 
+                        gotit(pane.receiver); 
+        }
+
+        if( uri  = commandToURI(session, text) ) {
+                requestURI( uri, insert_result );
         } else {
-                gotit();
+                insert_result();
         }
 
         ++session.command_id;
