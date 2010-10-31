@@ -43,9 +43,6 @@ function Pane(session, text)
         command.appendChild( prspan );
         command.appendChild( input );
 
-        this.receiver = document.createElement('div');
-        this.receiver.setAttribute('class', 'response');
-
         // create a pane to return results into. 
         this.pane     = document.createElement('div');
         this.pane.setAttribute('class', 'pane');
@@ -63,8 +60,10 @@ function Pane(session, text)
                 command.onclick = this.show;
         }
         this.show = function () {
-                this.pane.appendChild( this.receiver );
-                command.onclick = this.hide;
+                if( this.receiver ) {
+                        this.pane.appendChild( this.receiver );
+                        command.onclick = this.hide;
+                }
         }
 }
  
@@ -92,7 +91,6 @@ function requestURI(uri, gotit) {
                 xml_http.open('GET', uri, true);
                 xml_http.send();
         } catch (e) {
-                //FIX: put more of this into requestURI
                 if(!e.code) { throw e; }
                 gotit( html_to_DOM( true,
                         'REQUEST "' + uri + '" FAILED ['
@@ -107,18 +105,22 @@ function runCommand( session, text, gotit_cb ) {
         pane = new Pane(session, text);
         receiver = pane.receiver;
 
-        function gotit() { if(gotit_cb) gotit_cb(pane.receiver); }
+        function gotit() { 
+                pane.show();
+                if(gotit_cb) 
+                        gotit_cb(pane.receiver); 
+        }
 
         if( uri  = commandToURI(session, text) ) {
                 requestURI( uri, function(resp) {
-                        receiver.appendChild(resp);
+                        if(pane.receiver)
+                                pane.pane.replaceChild(resp, pane.receiver );
+                        pane.receiver = resp;
                         gotit();
                 })
         } else {
                 gotit();
         }
-
-        pane.show();
 
         ++session.command_id;
         return pane;
