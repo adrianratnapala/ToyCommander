@@ -1,43 +1,33 @@
+// -- Pluggable --------------------------------------
+
+var builtins = {       
+}
+
 // Converts command line text to a URL.
-function commandToURI(command) {
+function commandToURI(session, command) {
         if( !command )
                 return;
-        
+
         word0 = command.replace( /^\s*(\S+).*/, '$1');
+
+        var b = builtins[word0];
+        if(b) 
+                return b(session, word0, command);
+
         return encodeURI(word0);
 }
 
-// Request uri and place the result inside receiver. Call gotit once done.
-function requestURI(receiver, uri, gotit) {
-        var xml_http = new XMLHttpRequest();
-
-        /* request results from server. */
-        xml_http.onreadystatechange = function(){
-                switch(this.readyState) {
-                case 4:
-                        receiver.innerHTML = this.responseText;
-                        gotit()
-                }
-        }
-
-        try {
-                xml_http.open('GET', uri, true);
-                xml_http.send();
-        } catch(e) {
-                if(!e.code) {
-                        throw e;
-                }
-                receiver.setAttribute('class', 'error');
-                receiver.innerHTML = 'REQUEST "' + uri + '" FAILED ['
-                                                 + e.code +']: '
-                                                 + e.message;
-                gotit();
-        }
+// Creates command prompt (also used in pane header bars).
+function createPrompt(session) {
+        return document.createTextNode(session.command_id + '$ ');
 }
 
-// Runs the string "text", returns an DIV (pane) to catch the results. 
-function runCommand( session, text, gotit_cb ) {
-        id = session.command_id;
+// -- Core -------------------------------------------
+
+// A pane to hold an executed command and its results.
+function Pane(session, text) 
+{
+        this.id = session.command_id;
 
         var prspan = document.createElement('span');
         prspan.setAttribute( 'class', 'oprompt' );
@@ -48,28 +38,18 @@ function runCommand( session, text, gotit_cb ) {
         input.appendChild( document.createTextNode(text) );
  
         var command = document.createElement('div');
+        this.command = command;
         command.setAttribute('class', 'ocommand');
         command.appendChild( prspan );
         command.appendChild( input );
 
-        var receiver = document.createElement('div');
-        receiver.setAttribute('class', 'response');
+        this.receiver = document.createElement('div');
+        this.receiver.setAttribute('class', 'response');
 
         // create a pane to return results into. 
-        var pane     = document.createElement('div');
-        pane.setAttribute('class', 'pane');
-        pane.appendChild( command );
-
-        function gotit() {
-                if(gotit_cb)
-                        gotit_cb(receiver);
-        }
-        
-        if( uri  = commandToURI(text) ) {
-                requestURI( receiver, commandToURI(text), gotit );
-        } else {
-                gotit();
-        }
+        this.pane     = document.createElement('div');
+        this.pane.setAttribute('class', 'pane');
+        this.pane.appendChild( command );
 
         // Closures really are very cool.
         command.onmouseout = function() {
@@ -78,32 +58,74 @@ function runCommand( session, text, gotit_cb ) {
         command.onmouseover = function() {
                 this.setAttribute('class', 'hcommand');
         }
-        function hide() {
-                pane.removeChild( receiver );
-                command.onclick = show;
+        this.hide = function() {
+                this.pane.removeChild( this.receiver );
+                command.onclick = this.show;
         }
-        function show() {
-                pane.appendChild( receiver );
-                command.onclick = hide;
+        this.show = function () {
+                this.pane.appendChild( this.receiver );
+                command.onclick = this.hide;
         }
-        
-        show();
+}
+ 
+// Request uri and call gotit on the result.
+function requestURI(uri, gotit) {
+        var xml_http = new XMLHttpRequest();
 
-        return {
-                pane : pane,
-                command : command,
-                receiver : receiver,
-        };
+        function html_to_DOM(error, html) {
+                DOM = document.createElement('div');
+                DOM.setAttribute('class', error ? 'error' : 'response');
+                DOM.innerHTML = html;
+                return DOM;
+        }
+
+        /* request results from server. */
+        xml_http.onreadystatechange = function(){
+                switch(this.readyState) {
+                case 4:
+                        gotit(html_to_DOM(this.status!=200,
+                                          this.responseText));
+                }
+        }
+
+        try {
+                xml_http.open('GET', uri, true);
+                xml_http.send();
+        } catch (e) {
+                //FIX: put more of this into requestURI
+                if(!e.code) { throw e; }
+                gotit( html_to_DOM( true,
+                        resp.innerHTML = 'REQUEST "' + uri + '" FAILED ['
+                                                           + e.code +']: '
+                ))                                         + e.message;
+        }
 }
 
-function createPrompt(session) {
-        return document.createTextNode(session.command_id + '$ ');
+
+// Runs the string "text", returns an DIV (pane) to catch the results. 
+function runCommand( session, text, gotit_cb ) {
+        pane = new Pane(session, text);
+        receiver = pane.receiver;
+
+        function gotit() { if(gotit_cb) gotit_cb(pane.receiver); }
+
+        if( uri  = commandToURI(session, text) ) {
+                requestURI( uri, function(resp) {
+                        receiver.appendChild(resp);
+                        gotit();
+                })
+        } else {
+                gotit();
+        }
+
+        pane.show();
+
+        ++session.command_id;
+        return pane;
 }
 
 // Create user's command line input widget for session.
 function commandInput(session) {
-        ++session.command_id;
-
         var prspan = document.createElement('span');
         var prompt = createPrompt(session)
         prspan.setAttribute( 'class', 'prompt' );
