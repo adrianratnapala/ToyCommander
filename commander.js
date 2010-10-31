@@ -1,6 +1,5 @@
-
 // Runs the string "text", returns an DIV (pane) to catch the results. 
-function runCommand( text, responder ) {
+function runCommand( text, cb ) {
         /* create a pane to return results into. */
         var pane    = document.createElement('div');
         pane.setAttribute('class', 'pane');
@@ -20,7 +19,9 @@ function runCommand( text, responder ) {
         xml_http.onreadystatechange = function(){
                 if (this.readyState != 4)
                         return;
-                responder( resp, this.responseText );
+                resp.innerHTML = this.responseText;
+                if(cb)
+                        cb(resp, this);
         }
         xml_http.send();
         
@@ -34,23 +35,20 @@ function commandInput(commander) {
         input.setAttribute('type', 'input');
         input.setAttribute('name', 'input');
 
-        responder = function( resp, text ) {
-                resp.innerHTML = text;
-                input.focus();
-                window.scrollTo(0, input.offsetTop);
-        }  
+        function enter(ev) {
+                pane = runCommand(this.value, function(){
+                        input.focus();
+                        window.scrollTo(0, input.offsetTop);
+                })
+                document.body.insertBefore(pane, commander.toplevel);
+                this.focus();
+        }
 
         input.onkeydown = function(ev) {
-                if ( ev.keyCode != 13 /*RETURN*/ ) 
-                        return;
-                
-                try {
-                        pane = runCommand(this.value, responder);
-
-                        document.body.insertBefore( pane, commander.toplevel );
-                        input.focus();
-                } finally {
-                        return false; // swallow event, don't submit.
+                switch ( ev.keyCode ) {
+                case 13 /*RETURN*/:
+                        try { enter(ev); } 
+                        finally { return false; }
                 }
         }
 
