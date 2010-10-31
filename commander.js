@@ -36,7 +36,7 @@ function requestURI(receiver, uri, gotit) {
 }
 
 // Runs the string "text", returns an DIV (pane) to catch the results. 
-function runCommand( text, gotit_cb ) {
+function runCommand( session, text, gotit_cb ) {
         // create a pane to return results into. 
         var pane     = document.createElement('div');
         pane.setAttribute('class', 'pane');
@@ -64,15 +64,30 @@ function runCommand( text, gotit_cb ) {
         return pane;
 }
 
+function createPrompt(session) {
+        return document.createTextNode(++session.command_id + '$ ');
+}
+
 // Create user's command line input widget for session.
 function commandInput(session) {
-        var input = document.createElement('input');
+        var prspan = document.createElement('span');
+        var prompt = createPrompt(session)
+        prspan.setAttribute( 'class', 'prompt' );
+        prspan.appendChild( prompt );
+        session.commander.appendChild( prspan );
 
+        var input = document.createElement('input');
         input.setAttribute('type', 'input');
         input.setAttribute('class','command');
+        
+        session.commander.appendChild( input );
 
         function enter(ev) { // Handle user hitting ENTER
-                pane = runCommand(input.value, function(){
+                var old_prompt = prompt;
+                prompt = createPrompt(session);
+                prspan.replaceChild( prompt, old_prompt );
+
+                pane = runCommand(session, input.value, function(){
                         input.focus();
                         window.scrollTo(0, input.offsetTop);
                 })
@@ -93,14 +108,14 @@ function commandInput(session) {
 
 // The Session object holds the command line and old results.
 function Session(container) { 
+        this.command_id = 0;
         this.container = container;
 
         // The HTML form for the input line + accessories 
-        this.commander = document.createElement('form');
+        this.commander = document.createElement('div');
         this.commander.setAttribute('class', 'command');
 
         this.input_text = commandInput(this)
-        this.commander.appendChild( this.input_text );
         
         this.container.appendChild(this.commander);
 
