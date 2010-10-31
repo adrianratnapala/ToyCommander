@@ -57,8 +57,8 @@ function runCommand( text, gotit_cb ) {
         return pane;
 }
 
-// Create user's command line input widget. 
-function commandInput(commander) {
+// Create user's command line input widget for session.
+function commandInput(session) {
         var input = document.createElement('input');
 
         input.setAttribute('type', 'input');
@@ -70,7 +70,7 @@ function commandInput(commander) {
                         input.focus();
                         window.scrollTo(0, input.offsetTop);
                 })
-                document.body.insertBefore(pane, commander.toplevel);
+                document.body.insertBefore(pane, session.commander);
                 this.focus();
         }
 
@@ -89,20 +89,22 @@ function commandInput(commander) {
 }
 
 // Constructs the whole command widget, including the text input. 
-function Commander(prev) { 
-        this.toplevel = document.createElement('div');
+function Session(prev) { 
+        /* A container for the command line + accessories */
+        this.commander = document.createElement('div');
+        /* The HTML form for the input line. */
         var command_form = document.createElement('form');
         var input_text = commandInput(this)
 
-        this.toplevel.setAttribute('class', 'command');
+        this.commander.setAttribute('class', 'command');
         command_form.appendChild( input_text );
-        toplevel.appendChild( command_form );
-        document.body.appendChild(this.toplevel);
+        commander.appendChild( command_form );
+        document.body.appendChild(this.commander);
 
         input_text.focus();
 }
 
 window.onload = function() {
-        Commander();
+        Session();
 }
 
