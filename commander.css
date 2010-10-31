@@ -6,26 +6,44 @@ body {
         margin:0em;
 }
 
-.command {
+.command, .ocommand {
         background-color:#111;
         border:0em;
+        display:table;
+        width:100%;
+}
+
+.command {
+        color:green;
+}
+input.command {
+        display:table-cell;
+}
+
+.ocommand {
+        color:yellow;
+        font-style:italic;
+}
+span.ocommand {
+        display:table-cell;
+}
+
+.prompt, .oprompt {
+        text-align:right;
+        font-weight:bold;
+        display:table-cell;
+        padding-right:0.5em;
+        width:3em;
 }
 
 .prompt {
-        text-align:right;
         color:#0f0;
-        font-weight:bold;
-        width:5em;
-        display:table-cell;
-        padding-right:0.5em;
 }
 
-div.command {
+.oprompt {
         color:yellow;
-        font-style:italic;
-        display:table;
-        width:100%;
-} 
+}
+
 
 
 input.command {
