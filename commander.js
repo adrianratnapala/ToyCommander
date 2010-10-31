@@ -82,7 +82,8 @@ function requestURI(uri, gotit) {
         xml_http.onreadystatechange = function(){
                 switch(this.readyState) {
                 case 4:
-                        gotit(html_to_DOM(this.status!=200,
+                        // FIX: what statuses are good and what aren't?
+                        gotit(html_to_DOM(this.status && this.status!=200,
                                           this.responseText));
                 }
         }
