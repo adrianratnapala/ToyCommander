@@ -9,7 +9,7 @@ function commandToURI(command) {
 
 // Runs the string "text", returns an DIV (pane) to catch the results. 
 function runCommand( text, gotit_cb ) {
-        /* create a pane to return results into. */
+        // create a pane to return results into. 
         var pane    = document.createElement('div');
         pane.setAttribute('class', 'pane');
         var resp    = document.createElement('div');
@@ -29,8 +29,10 @@ function runCommand( text, gotit_cb ) {
                         gotit_cb(resp, xml_http);
         }
 
-        if( !(uri = commandToURI(text)) )
-                return gotit();
+        if( !(uri = commandToURI(text)) ) {
+                gotit();
+                return pane;
+        }
 
         /* request results from server. */
         xml_http.onreadystatechange = function(){
@@ -62,25 +64,21 @@ function commandInput(session) {
         var input = document.createElement('input');
 
         input.setAttribute('type', 'input');
-        input.setAttribute('name', 'input');
         input.setAttribute('class','command');
 
-        function enter(ev) {
+        function enter(ev) { // Handle user hitting ENTER
                 pane = runCommand(input.value, function(){
                         input.focus();
                         window.scrollTo(0, input.offsetTop);
                 })
-                document.body.insertBefore(pane, session.commander);
-                this.focus();
+                session.container.insertBefore(pane, session.commander);
         }
 
-        input.onkeydown = function(ev) {
+        input.onkeydown = function(ev) { // Filter user keystrokes
                 switch ( ev.keyCode ) {
                 case 13 /*RETURN*/:
                         try { enter(ev); } 
-                        catch(e) {
-                                alert(e);
-                        }
+                        catch(e) { alert(e); }
                         finally { return false; }
                 }
         }
@@ -88,23 +86,21 @@ function commandInput(session) {
         return input;
 }
 
-// Constructs the whole command widget, including the text input. 
-function Session(prev) { 
-        /* A container for the command line + accessories */
-        this.commander = document.createElement('div');
-        /* The HTML form for the input line. */
-        var command_form = document.createElement('form');
-        var input_text = commandInput(this)
+// The Session object holds the command line and old results.
+function Session(container) { 
+        this.container = container;
 
+        // The HTML form for the input line + accessories 
+        this.commander = document.createElement('form');
         this.commander.setAttribute('class', 'command');
-        command_form.appendChild( input_text );
-        commander.appendChild( command_form );
-        document.body.appendChild(this.commander);
+
+        this.input_text = commandInput(this)
+        this.commander.appendChild( this.input_text );
+        
+        this.container.appendChild(this.commander);
 
         input_text.focus();
 }
 
-window.onload = function() {
-        Session();
-}
+window.onload = function(){ Session(document.body); }
 
