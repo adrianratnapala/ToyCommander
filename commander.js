@@ -34,6 +34,7 @@ function commandInput(commander) {
 
         input.setAttribute('type', 'input');
         input.setAttribute('name', 'input');
+        input.setAttribute('class','command');
 
         function enter(ev) {
                 pane = runCommand(this.value, function(){
