@@ -95,9 +95,9 @@ function requestURI(uri, gotit) {
                 //FIX: put more of this into requestURI
                 if(!e.code) { throw e; }
                 gotit( html_to_DOM( true,
-                        resp.innerHTML = 'REQUEST "' + uri + '" FAILED ['
-                                                           + e.code +']: '
-                ))                                         + e.message;
+                        'REQUEST "' + uri + '" FAILED ['
+                                          + e.code +']: '
+))                                        + e.message;
         }
 }
 
