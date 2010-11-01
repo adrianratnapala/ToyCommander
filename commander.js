@@ -7,30 +7,9 @@ function textBuiltins(session, words, text) {
 }
 
 function builtinCommand(session, words, text) {
-        if( resp = textBuiltins(session, words, text) ) {
-                // FIX: too similart to code below.
-                var div = document.createElement('div');
-                div.innerHTML = resp;
-                div.setAttribute("class", "response");
-                return div;
-        }
+        if( html = textBuiltins(session, words, text) ) 
+                return htmlToDOM(false, html)
 }
-
-/*
-// Converts command line text to a URL.
-function commandToURI(session, command) {
-        if( !command )
-                return;
-
-        words = command.replace('/\s+/g', ' ').split(' ');
-
-        var b = builtins[words[0]];
-        if(b) 
-                return b(session, word0, command);
-
-        return encodeURI(word0);
-}
-*/
 
 // Creates command prompt (also used in pane header bars).
 function createPrompt(session) {
@@ -38,6 +17,14 @@ function createPrompt(session) {
 }
 
 // -- Core -------------------------------------------
+
+function htmlToDOM(error, html) {
+        DOM = document.createElement('div');
+        DOM.setAttribute('class', error ? 'error' : 'response');
+        DOM.innerHTML = html;
+        return DOM;
+}
+
 
 // A pane to hold an executed command and its results.
 function Pane(session, text) 
@@ -86,19 +73,12 @@ function Pane(session, text)
 function requestURI(uri, gotit) {
         var xml_http = new XMLHttpRequest();
 
-        function html_to_DOM(error, html) {
-                DOM = document.createElement('div');
-                DOM.setAttribute('class', error ? 'error' : 'response');
-                DOM.innerHTML = html;
-                return DOM;
-        }
-
         /* request results from server. */
         xml_http.onreadystatechange = function(){
                 switch(this.readyState) {
                 case 4:
                         // FIX: what statuses are good and what aren't?
-                        gotit(html_to_DOM(this.status && this.status!=200,
+                        gotit(htmlToDOM(this.status && this.status!=200,
                                           this.responseText));
                 }
         }
