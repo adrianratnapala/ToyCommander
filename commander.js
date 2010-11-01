@@ -38,6 +38,33 @@ function htmlToDOM(error, html) {
         DOM.innerHTML = html;
         return DOM;
 }
+ 
+// Request uri and call gotit on the result.
+function requestURI(uri, gotit) {
+        var xml_http = new XMLHttpRequest();
+
+        /* request results from server. */
+        xml_http.onreadystatechange = function(){
+                switch(this.readyState) {
+                case 4:
+                        // FIX: what statuses are good and what aren't?
+                        gotit(htmlToDOM(this.status && this.status!=200,
+                                          this.responseText));
+                }
+        }
+
+        try {
+                xml_http.open('GET', uri, true);
+                xml_http.send();
+        } catch (e) {
+                if(!e.code) { throw e; }
+                gotit( html_to_DOM( true,
+                        'REQUEST "' + uri + '" FAILED [' + e.code +']: '
+                                          + e.message));
+        }
+}
+
+// Pane widget ---------------------------------------------------
 
 // A pane to hold an executed command and its results.
 function Pane(session, text) 
@@ -71,59 +98,34 @@ function Pane(session, text)
                 this.setAttribute('class', 'hcommand');
         }
 
-        // FIX: use style.visiblity instead.
-        this.hide = function() {
-                this.pane.removeChild( this.receiver );
-                command.onclick = this.show;
+        var shown = null;
+        var saved = null
+        this.show = function (show) {
+                saved = shown
+                shown = updateChild( this.pane, show, shown )
         }
-        this.show = function () {
-                if( this.receiver ) {
-                        this.pane.appendChild( this.receiver );
-                        command.onclick = this.hide;
-                }
-        }
-}
- 
-// Request uri and call gotit on the result.
-function requestURI(uri, gotit) {
-        var xml_http = new XMLHttpRequest();
-
-        /* request results from server. */
-        xml_http.onreadystatechange = function(){
-                switch(this.readyState) {
-                case 4:
-                        // FIX: what statuses are good and what aren't?
-                        gotit(htmlToDOM(this.status && this.status!=200,
-                                          this.responseText));
-                }
-        }
-
-        try {
-                xml_http.open('GET', uri, true);
-                xml_http.send();
-        } catch (e) {
-                if(!e.code) { throw e; }
-                gotit( html_to_DOM( true,
-                        'REQUEST "' + uri + '" FAILED [' + e.code +']: '
-                                          + e.message));
+        this.onclick = function() {
+                this.show(saved)
         }
 }
 
+function updateChild(par, n, o) {
+        if( n && o ) par.replaceChild(n, o) ;
+        else if (n) par.appendChild(n);
+        else if (o) par.removeChild(o);
+        return n
+}
+
+// Command line widget -------------------------------------------
 
 // Runs the string "text", returns an DIV (pane) to catch the results. 
 function runCommand( session, text, gotit ) {
         pane = new Pane(session, text);
-        receiver = pane.receiver;
 
-        function insert_result(resp) { 
-                if(resp) {
-                        if(pane.receiver)
-                                pane.pane.replaceChild(resp, pane.receiver );
-                        pane.receiver = resp;
-                }
-                pane.show();
+        function insert_result(resp) {
+                pane.show( resp )
                 if(gotit) 
-                        gotit(pane.receiver); 
+                        gotit(resp); 
         }
 
         var words = text.replace('/\s+/g', ' ').split(' ');
