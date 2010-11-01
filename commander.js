@@ -1,14 +1,10 @@
 // -- Pluggable --------------------------------------
 
-function textBuiltins(session, words, text) {
-        switch(words[0]) {
-        case 'echo' : return words.slice(1).join(' ');
-        }
-}
-
-function builtinCommand(session, words, text) {
-        if( html = textBuiltins(session, words, text) ) 
-                return htmlToDOM(false, html)
+/* FIX: what about non-text builtins? */
+var builtins = {
+        'echo' : function(_, words) {return words.slice(1).join(' ')},
+        'e-cho' : function(_, words) {return words.slice(1).join('-')},
+        'oche' : function(_, words) {return words.slice(1).reverse().join(' ')},
 }
 
 // Creates command prompt (also used in pane header bars).
@@ -18,13 +14,30 @@ function createPrompt(session) {
 
 // -- Core -------------------------------------------
 
+/* Enclose some HTML inside a surrounding DIV object */
+function builtinCommand(session, words, text) {
+        if(b = builtins[words[0]] ) {
+                html = b(session, words, text);
+                return htmlToDOM( false, html ? html : '' );
+        }
+}
+
+function suggestionList(session, prefix) {
+        var s = [];
+        for (var k in builtins) {
+                if ( prefix == k.slice(0, prefix.length) )
+                        s.push(k);
+        }
+        return s
+}
+
+/* Enclose some HTML inside a surrounding DIV object */
 function htmlToDOM(error, html) {
         DOM = document.createElement('div');
         DOM.setAttribute('class', error ? 'error' : 'response');
         DOM.innerHTML = html;
         return DOM;
 }
-
 
 // A pane to hold an executed command and its results.
 function Pane(session, text) 
@@ -57,6 +70,8 @@ function Pane(session, text)
         command.onmouseover = function() {
                 this.setAttribute('class', 'hcommand');
         }
+
+        // FIX: use style.visiblity instead.
         this.hide = function() {
                 this.pane.removeChild( this.receiver );
                 command.onclick = this.show;
@@ -123,6 +138,18 @@ function runCommand( session, text, gotit ) {
         return pane;
 }
 
+function suggestionBox(session, prefix) {
+        slist = suggestionList(session, prefix).join(' ');
+        if(!slist) 
+                return
+        var sbox = document.createElement('div')
+        sbox.style.height = '100px';
+        sbox.style.width  = '100%';
+        sbox.style.backgroundColor  = 'red';
+        sbox.innerHTML = suggestionList(session, prefix).join(' ');
+        return sbox
+}
+        
 // Create user's command line input widget for session.
 function commandInput(session) {
         var prspan = document.createElement('span');
@@ -137,6 +164,18 @@ function commandInput(session) {
         
         session.commander.appendChild( input );
 
+        var sbox = null
+        function sugg(box) {
+                if(sbox) {
+                        if(box)
+                                session.commander.replaceChild(box, sbox);
+                        else
+                                session.commander.removeChild(sbox);
+                } else if (box)
+                        session.commander.appendChild(box);
+                sbox = box;
+        }
+
         function enter(ev) { // Handle user hitting ENTER
                 var old_prompt = prompt;
                 prompt = createPrompt(session);
@@ -150,8 +189,14 @@ function commandInput(session) {
                 session.container.insertBefore(pane.pane, session.commander);
         }
 
+        input.onkeyup = function(ev) { // Filter user keystrokes
+                var prefix = input.value
+                if(input.value)
+                        sugg( suggestionBox(session, input.value) );
+        }
+ 
         input.onkeydown = function(ev) { // Filter user keystrokes
-                switch ( ev.keyCode ) {
+               switch ( ev.keyCode ) {
                 case 13 /*RETURN*/:
                         try { enter(ev); } 
                         catch(e) { alert(e); }

@@ -1,11 +1,20 @@
+Near plan
+---------
+
+5) Client-side customisation module.
+9) Suggestions & autocompletion.
+
+
+Client/Server plans
+-------------------
+
 1) Streamed responses (chaining XMLHttpRequests, I think).
-
 4) SaveAs that works! But how????
-
-5) Client-side builtins.
-
 6) Noscript.
 
-8) Nested command lines!
 
-9) Suggestions & autocompletion.
+Big Plans
+-------------------
+
+8)  Nested command lines!
+10) Dynamic apps within panes.
