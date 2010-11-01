@@ -1,21 +1,36 @@
 // -- Pluggable --------------------------------------
 
-var builtins = {       
+function textBuiltins(session, words, text) {
+        switch(words[0]) {
+        case 'echo' : return words.slice(1).join(' ');
+        }
 }
 
+function builtinCommand(session, words, text) {
+        if( resp = textBuiltins(session, words, text) ) {
+                // FIX: too similart to code below.
+                var div = document.createElement('div');
+                div.innerHTML = resp;
+                div.setAttribute("class", "response");
+                return div;
+        }
+}
+
+/*
 // Converts command line text to a URL.
 function commandToURI(session, command) {
         if( !command )
                 return;
 
-        word0 = command.replace( /^\s*(\S+).*/, '$1');
+        words = command.replace('/\s+/g', ' ').split(' ');
 
-        var b = builtins[word0];
+        var b = builtins[words[0]];
         if(b) 
                 return b(session, word0, command);
 
         return encodeURI(word0);
 }
+*/
 
 // Creates command prompt (also used in pane header bars).
 function createPrompt(session) {
@@ -116,11 +131,13 @@ function runCommand( session, text, gotit ) {
                         gotit(pane.receiver); 
         }
 
-        if( uri  = commandToURI(session, text) ) {
-                requestURI( uri, insert_result );
-        } else {
+        var words = text.replace('/\s+/g', ' ').split(' ');
+        if (!words) 
                 insert_result();
-        }
+        else if ( resp = builtinCommand(session, words, text) ) 
+                insert_result(resp);
+        else 
+                requestURI( words[0], insert_result );
 
         ++session.command_id;
         return pane;
