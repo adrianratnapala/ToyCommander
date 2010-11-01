@@ -191,9 +191,9 @@ function commandInput(session) {
         }
 
         input.onkeyup = function(ev) { // Filter user keystrokes
-                var prefix = input.value
+                var prefix = input.value.slice(0, input.selectionStart)
                 if(input.value) {
-                        sugg( suggestionBox(session, input.value) );
+                        sugg( suggestionBox(session, prefix) );
                         window.scrollTo(0, session.commander.offsetTop);
                 }
         }
