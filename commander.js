@@ -98,6 +98,7 @@ function Pane(session, text)
                 this.setAttribute('class', 'hcommand');
         }
 
+        // Look. Think. Join the dark side.
         var shown = null;
         var saved = null
         this.show = function (show) {
@@ -120,24 +121,24 @@ function updateChild(par, n, o) {
 
 // Runs the string "text", returns an DIV (pane) to catch the results. 
 function runCommand( session, text, gotit ) {
-        pane = new Pane(session, text);
 
-        function insert_result(resp) {
+        function show_result(resp) {
+                var pane = new Pane(session, text);
                 pane.show( resp )
+                session.container.insertBefore(pane.pane, session.commander);
                 if(gotit) 
                         gotit(resp); 
         }
 
         var words = text.replace('/\s+/g', ' ').split(' ');
         if (!words) 
-                insert_result();
+                show_result();
         else if ( resp = builtinCommand(session, words, text) ) 
-                insert_result(resp);
+                show_result(resp);
         else 
-                requestURI( words[0], insert_result );
+                requestURI( words[0], show_result );
 
         ++session.command_id;
-        return pane;
 }
 
 function suggestionBox(session, prefix) {
@@ -184,9 +185,7 @@ function commandInput(session) {
                 prspan.replaceChild( prompt, old_prompt );
 
                 // FIX: Naming
-                pane = runCommand(session, input.value, function(){
-                        session.container.insertBefore(pane.pane, 
-                                                       session.commander);
+                runCommand(session, input.value, function(){
                         input.focus();
                         window.scrollTo(0, session.commander.offsetTop);
                 })
