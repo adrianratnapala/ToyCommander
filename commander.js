@@ -183,16 +183,19 @@ function commandInput(session) {
 
                 // FIX: Naming
                 pane = runCommand(session, input.value, function(){
+                        session.container.insertBefore(pane.pane, 
+                                                       session.commander);
                         input.focus();
                         window.scrollTo(0, session.commander.offsetTop);
                 })
-                session.container.insertBefore(pane.pane, session.commander);
         }
 
         input.onkeyup = function(ev) { // Filter user keystrokes
                 var prefix = input.value
-                if(input.value)
+                if(input.value) {
                         sugg( suggestionBox(session, input.value) );
+                        window.scrollTo(0, session.commander.offsetTop);
+                }
         }
  
         input.onkeydown = function(ev) { // Filter user keystrokes
