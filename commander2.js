@@ -7,38 +7,42 @@ function makePrompt(session) {
 // Request uri and call gotit(xmlHTTP, error) on the result.
 function ajaxGET(uri, gotit) {
         // FIX: crazy error return type.
+        var ajax = new XMLHttpRequest();
 
-        var xml_http = new XMLHttpRequest();
-        // FIX: figure out how to do synchronous AJAX.
-
-        /* request results from server. */
-        xml_http.onreadystatechange = function() {
-                var status = xml_http.status
-                if(this.readyState)
-                        gotit(xml_http, status && status != 400)
+        /* Request results from server. */
+        ajax.onreadystatechange = function() {
+                var status = ajax.status
+                if(this.readyState == 4)
+                        gotit(ajax, (status==200) ? false : status)
         }
 
         try {
-                xml_http.open('GET', uri, true);
-                xml_http.send();
+                ajax.open('GET', uri, true);
+                ajax.send();
         } catch (e) {
                 if(!e.code) throw e;
                 else gotit(null, e)
         }
 }
 
-// Runs the string "text", returns a DIV (pane) to catch the results. 
+// Runs the string "text", calls gotit(responseDOM)
 function runCommand( id, text, gotit ) {
         var words = text.replace('/\s+/g', ' ').split(' ');
         if (!words) 
                 return gotit();
-        return gotit( document.createTextNode(words[1]) )
-        //requestURI( words[0], show_result );
+         
+        ajaxGET( encodeURI(words[0]), function(ajax, e) {
+                var respDOM = document.createElement('div');
+                respDOM.setAttribute('class', e ? 'error' : 'response')
+                respDOM.innerHTML = ajax.responseText;
+                gotit(respDOM)
+        })
 }
 
 
 //-------------------------------------------------------
 
+// hold output results and command bar (similar to a title bar)
 function Pane(session) {
         // snapshot the session
         var text = session.input.value
