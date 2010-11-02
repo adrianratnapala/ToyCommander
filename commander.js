@@ -80,15 +80,15 @@ function Pane(session, text)
         input.appendChild( document.createTextNode(text) );
  
         var command = document.createElement('div');
-        this.command = command;
         command.setAttribute('class', 'ocommand');
         command.appendChild( prspan );
         command.appendChild( input );
 
         // create a pane to return results into. 
-        this.pane     = document.createElement('div');
-        this.pane.setAttribute('class', 'pane');
-        this.pane.appendChild( command );
+        pane     = document.createElement('div');
+        pane.setAttribute('class', 'pane');
+        pane.appendChild( command );
+        this.pane = pane
 
         // Closures really are very cool.
         command.onmouseout = function() {
@@ -101,12 +101,13 @@ function Pane(session, text)
         // Look. Think. Join the dark side.
         var shown = null;
         var saved = null
-        this.show = function (show) {
+        this.show = show = function (w) {
                 saved = shown
-                shown = updateChild( this.pane, show, shown )
+                shown = updateChild( pane, w, shown )
         }
-        this.onclick = function() {
-                this.show(saved)
+
+        command.onclick = function() {
+                show(saved)
         }
 }
 
@@ -119,7 +120,7 @@ function updateChild(par, n, o) {
 
 // Command line widget -------------------------------------------
 
-// Runs the string "text", returns an DIV (pane) to catch the results. 
+// Runs the string "text", returns a DIV (pane) to catch the results. 
 function runCommand( session, text, gotit ) {
 
         function show_result(resp) {
