@@ -11,9 +11,10 @@ function ajaxGET(uri, gotit) {
 
         /* Request results from server. */
         ajax.onreadystatechange = function() {
-                var status = ajax.status
-                if(this.readyState == 4)
+                if(this.readyState == 4) {
+                        var status = ajax.status
                         gotit(ajax, (status==200) ? false : status)
+                }
         }
 
         try {
