@@ -69,10 +69,18 @@ function Pane(session) {
         DOM.appendChild( command_bar );
         this.DOM = DOM
 
+        var content = null, shown = null
+        command_bar.onclick = function() {
+                if(!shown) 
+                        return DOM.appendChild(shown = content)
+                DOM.removeChild(shown)
+                shown = null
+        }
+
         this.go = function(gotit){
                 runCommand(id, text, function(respDOM){
                         if(respDOM) 
-                                DOM.appendChild(respDOM)
+                                DOM.appendChild(content = shown = respDOM)
                         gotit()
                 })
         }
@@ -87,7 +95,6 @@ function Session(command, prompt, input) {
         this.prompt = prompt
         this.input = input
         this.command_id = 0
-        
 
         function focus() {
                 input.focus();
