@@ -27,10 +27,23 @@ function ajaxGET(uri, gotit) {
         }
 }
 
+// Runs the string "text", returns a DIV (pane) to catch the results. 
+function runCommand( id, text, gotit ) {
+        var words = text.replace('/\s+/g', ' ').split(' ');
+        if (!words) 
+                return gotit();
+        return gotit( document.createTextNode(words[1]) )
+        //requestURI( words[0], show_result );
+}
+
+
+//-------------------------------------------------------
+
 function Pane(session) {
-        // snapshot the section
+        // snapshot the session
         var text = session.input.value
         var prompt_text_node = makePrompt(session)
+        var id = session.command_id
 
         // represent it: FIX: rationalise the CSS classses
         var prompt = document.createElement('span');
@@ -51,7 +64,12 @@ function Pane(session) {
         DOM.appendChild( command_bar );
         this.DOM = DOM
 
-        this.go = function(gotit){gotit()}
+        this.go = function(gotit){
+                runCommand(id, text, function(respDOM){
+                        DOM.appendChild(respDOM)
+                        gotit()
+                })
+        }
 }
 
 //-------------------------------------------------------
