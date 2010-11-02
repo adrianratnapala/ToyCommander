@@ -1,3 +1,15 @@
+var builtins = {
+        'echo' : function(id, text, words) {
+                return { html : words.slice(1).join(' ' ) }
+        },
+        'e-cho': function(id, text, words) {
+                return { html : words.slice(1).join('-' ), error:true }
+        },
+        'oche' : function(id, text, words) {
+                return { html : words.slice(1).reverse().join(' ' ) }
+        }
+}
+
 function makePrompt(session) {
         return document.createTextNode( session.command_id + '$ ' );
 }
@@ -26,20 +38,30 @@ function ajaxGET(uri, gotit) {
         }
 }
 
-// Runs the string "text", calls gotit(responseDOM)
-function runCommand( id, text, gotit ) {
-        var words = text.replace('/\s+/g', ' ').split(' ');
-        if (!words || words[0]=='')  
-                return gotit(null);
-         
-        ajaxGET( encodeURI(words[0]), function(ajax, e) {
-                var respDOM = document.createElement('div');
-                respDOM.setAttribute('class', e ? 'error' : 'response')
-                respDOM.innerHTML = ajax.responseText;
-                gotit(respDOM)
-        })
+function responseToDOM(response) {
+        var DOM = document.createElement('div');
+        DOM.setAttribute('class', response.error ? 'error' : 'response')
+        DOM.innerHTML = response.html;
+        return DOM
 }
 
+// Finds a way to run the string "text" then calls gotit(responseDOM)
+function runCommand( id, text, gotit ) {
+        var words = text.replace('/\s+/g', ' ').split(' ');
+
+        if (!words || words[0]=='')  
+                return gotit(null);
+
+        if(fun = builtins[words[0]])
+                return gotit(responseToDOM(fun(id, text, words)) )
+         
+        ajaxGET( encodeURI(words[0]), function(ajax, e) {
+                return gotit( responseToDOM({
+                        html : ajax.responseText,
+                        error: e,
+                   }))
+        })
+}
 
 //-------------------------------------------------------
 
