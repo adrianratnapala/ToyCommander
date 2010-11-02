@@ -29,8 +29,8 @@ function ajaxGET(uri, gotit) {
 // Runs the string "text", calls gotit(responseDOM)
 function runCommand( id, text, gotit ) {
         var words = text.replace('/\s+/g', ' ').split(' ');
-        if (!words) 
-                return gotit();
+        if (!words || words[0]=='')  
+                return gotit(null);
          
         ajaxGET( encodeURI(words[0]), function(ajax, e) {
                 var respDOM = document.createElement('div');
@@ -71,7 +71,8 @@ function Pane(session) {
 
         this.go = function(gotit){
                 runCommand(id, text, function(respDOM){
-                        DOM.appendChild(respDOM)
+                        if(respDOM) 
+                                DOM.appendChild(respDOM)
                         gotit()
                 })
         }
