@@ -150,6 +150,8 @@ function Session(liveDOM, promptDOM, inputDOM) {
                 pane.go(focus)
         }
 
+        containerDOM.onclick = focus
+
         promptDOM.replaceChild(makePrompt(session), promptDOM.firstChild)
         focus()
 }
