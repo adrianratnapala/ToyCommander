@@ -133,13 +133,17 @@ function sugListToDOM(sugg_list) {
 
 function Input(session, DOM, go) {
         this.DOM = DOM
-        DOM.onkeyup = function(ev) { 
-                var prefix  = this.value.slice(0, DOM.selectionStart)
+
+        function suggest() {
+                var prefix  = DOM.value.slice(0, DOM.selectionStart)
                 var suggDOM = sugListToDOM( getSuggestions(prefix) )
                 var helpDOM = session.helpDOM
                 helpDOM.replaceChild(suggDOM, helpDOM.firstChild)
         }
  
+        DOM.onkeyup = function() { 
+                suggest()
+        }
         DOM.onkeydown = function(ev) { // Filter user keystrokes
                switch ( ev.keyCode ) {
                case 13 /*RETURN*/:
@@ -148,6 +152,8 @@ function Input(session, DOM, go) {
                         finally { return false; }
                 }
         }
+
+        suggest()
 }
 
 function Session(liveDOM, promptDOM, inputDOM, helpDOM) {
