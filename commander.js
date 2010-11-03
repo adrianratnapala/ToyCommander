@@ -1,232 +1,158 @@
-// -- Pluggable --------------------------------------
-
-/* FIX: what about non-text builtins? */
 var builtins = {
-        'echo' : function(_, words) {return words.slice(1).join(' ')},
-        'e-cho' : function(_, words) {return words.slice(1).join('-')},
-        'oche' : function(_, words) {return words.slice(1).reverse().join(' ')},
-}
-
-// Creates command prompt (also used in pane header bars).
-function createPrompt(session) {
-        return document.createTextNode(session.command_id + '$ ');
-}
-
-// -- Core -------------------------------------------
-
-/* Enclose some HTML inside a surrounding DIV object */
-function builtinCommand(session, words, text) {
-        if(b = builtins[words[0]] ) {
-                html = b(session, words, text);
-                return htmlToDOM( false, html ? html : '' );
+        'echo' : function(id, text, words) {
+                return { html : words.slice(1).join(' ' ) }
+        },
+        'e-cho': function(id, text, words) {
+                return { html : words.slice(1).join('-' ), error:true }
+        },
+        'oche' : function(id, text, words) {
+                return { html : words.slice(1).reverse().join(' ' ) }
         }
 }
 
-function suggestionList(session, prefix) {
-        var s = [];
-        for (var k in builtins) {
-                if ( prefix == k.slice(0, prefix.length) )
-                        s.push(k);
-        }
-        return s
+function makePrompt(session) {
+        return document.createTextNode( session.command_id + '$ ' );
 }
 
-/* Enclose some HTML inside a surrounding DIV object */
-function htmlToDOM(error, html) {
-        DOM = document.createElement('div');
-        DOM.setAttribute('class', error ? 'error' : 'response');
-        DOM.innerHTML = html;
-        return DOM;
-}
+//-------------------------------------------------------
  
-// Request uri and call gotit on the result.
-function requestURI(uri, gotit) {
-        var xml_http = new XMLHttpRequest();
+// Request uri and call gotit(xmlHTTP, error) on the result.
+function ajaxGET(uri, gotit) {
+        // FIX: crazy error return type.
+        var ajax = new XMLHttpRequest();
 
-        /* request results from server. */
-        xml_http.onreadystatechange = function(){
-                switch(this.readyState) {
-                case 4:
-                        // FIX: what statuses are good and what aren't?
-                        gotit(htmlToDOM(this.status && this.status!=200,
-                                          this.responseText));
+        /* Request results from server. */
+        ajax.onreadystatechange = function() {
+                if(this.readyState == 4) {
+                        var status = ajax.status
+                        gotit(ajax, (status==200) ? false : status)
                 }
         }
 
         try {
-                xml_http.open('GET', uri, true);
-                xml_http.send();
+                ajax.open('GET', uri, true);
+                ajax.send();
         } catch (e) {
-                if(!e.code) { throw e; }
-                gotit( html_to_DOM( true,
-                        'REQUEST "' + uri + '" FAILED [' + e.code +']: '
-                                          + e.message));
+                if(!e.code) throw e;
+                else gotit(null, e)
         }
 }
 
-// Pane widget ---------------------------------------------------
+function responseToDOM(response) {
+        var DOM = document.createElement('div');
+        DOM.setAttribute('class', response.error ? 'error' : 'response')
+        DOM.innerHTML = response.html;
+        return DOM
+}
 
-// A pane to hold an executed command and its results.
-function Pane(session, text) 
-{
-        this.id = session.command_id;
+// Finds a way to run the string "text" then calls gotit(responseDOM)
+function runCommand( id, text, gotit ) {
+        var words = text.replace('/\s+/g', ' ').split(' ');
 
-        var prspan = document.createElement('span');
-        prspan.setAttribute( 'class', 'oprompt' );
-        prspan.appendChild( createPrompt(session) );
+        if (!words || words[0]=='')  
+                return gotit(null);
+
+        if(fun = builtins[words[0]])
+                return gotit(responseToDOM(fun(id, text, words)) )
+         
+        ajaxGET( encodeURI(words[0]), function(ajax, e) {
+                return gotit( responseToDOM({
+                        html : ajax.responseText,
+                        error: e,
+                   }))
+        })
+}
+
+//-------------------------------------------------------
+
+// hold output results and command bar (similar to a title bar)
+function Pane(session) {
+        // snapshot the session
+        var text = session.input.value
+        var prompt_text_node = makePrompt(session)
+        var id = session.command_id
+
+        // represent it: FIX: rationalise the CSS classses
+        var prompt = document.createElement('span');
+        prompt.setAttribute( 'class', 'oprompt' );
+        prompt.appendChild( prompt_text_node );
 
         var input = document.createElement('span');
         input.setAttribute('class','input');
         input.appendChild( document.createTextNode(text) );
  
-        var command = document.createElement('div');
-        command.setAttribute('class', 'ocommand');
-        command.appendChild( prspan );
-        command.appendChild( input );
+        var command_bar = document.createElement('div');
+        command_bar.setAttribute('class', 'ocommand');
+        command_bar.appendChild( prompt );
+        command_bar.appendChild( input );
 
-        // create a pane to return results into. 
-        pane     = document.createElement('div');
-        pane.setAttribute('class', 'pane');
-        pane.appendChild( command );
-        this.pane = pane
+        var DOM = document.createElement('div');
+        DOM.setAttribute('class', 'pane');
+        DOM.appendChild( command_bar );
+        this.DOM = DOM
 
-        // Closures really are very cool.
-        command.onmouseout = function() {
-                this.setAttribute('class', 'ocommand');
-        }
-        command.onmouseover = function() {
-                this.setAttribute('class', 'hcommand');
-        }
-
-        // Look. Think. Join the dark side.
-        var shown = null;
-        var saved = null
-        this.show = show = function (w) {
-                saved = shown
-                shown = updateChild( pane, w, shown )
+        var content = null, shown = null
+        command_bar.onclick = function() {
+                if(!shown) 
+                        return DOM.appendChild(shown = content)
+                DOM.removeChild(shown)
+                shown = null
         }
 
-        command.onclick = function() {
-                show(saved)
-        }
-}
-
-function updateChild(par, n, o) {
-        if( n && o ) par.replaceChild(n, o) ;
-        else if (n) par.appendChild(n);
-        else if (o) par.removeChild(o);
-        return n
-}
-
-// Command line widget -------------------------------------------
-
-// Runs the string "text", returns a DIV (pane) to catch the results. 
-function runCommand( session, text, gotit ) {
-
-        function show_result(resp) {
-                var pane = new Pane(session, text);
-                pane.show( resp )
-                session.container.insertBefore(pane.pane, session.commander);
-                if(gotit) 
-                        gotit(resp); 
-        }
-
-        var words = text.replace('/\s+/g', ' ').split(' ');
-        if (!words) 
-                show_result();
-        else if ( resp = builtinCommand(session, words, text) ) 
-                show_result(resp);
-        else 
-                requestURI( words[0], show_result );
-
-        ++session.command_id;
-}
-
-function suggestionBox(session, prefix) {
-        slist = suggestionList(session, prefix).join(' ');
-        if(!slist) 
-                return
-        var sbox = document.createElement('div')
-        sbox.style.height = '100px';
-        sbox.style.width  = '100%';
-        sbox.style.backgroundColor  = 'red';
-        sbox.innerHTML = suggestionList(session, prefix).join(' ');
-        return sbox
-}
-        
-// Create user's command line input widget for session.
-function commandInput(session) {
-        var prspan = document.createElement('span');
-        var prompt = createPrompt(session)
-        prspan.setAttribute( 'class', 'prompt' );
-        prspan.appendChild( prompt );
-        session.commander.appendChild( prspan );
-
-        var input = document.createElement('input');
-        input.setAttribute('type', 'input');
-        input.setAttribute('class','command');
-        
-        session.commander.appendChild( input );
-
-        var sbox = null
-        function sugg(box) {
-                if(sbox) {
-                        if(box)
-                                session.commander.replaceChild(box, sbox);
-                        else
-                                session.commander.removeChild(sbox);
-                } else if (box)
-                        session.commander.appendChild(box);
-                sbox = box;
-        }
-
-        function enter(ev) { // Handle user hitting ENTER
-                var old_prompt = prompt;
-                prompt = createPrompt(session);
-                prspan.replaceChild( prompt, old_prompt );
-
-                // FIX: Naming
-                runCommand(session, input.value, function(){
-                        input.focus();
-                        window.scrollTo(0, session.commander.offsetTop);
+        this.go = function(gotit){
+                runCommand(id, text, function(respDOM){
+                        if(respDOM) 
+                                DOM.appendChild(content = shown = respDOM)
+                        gotit()
                 })
         }
+}
 
-        input.onkeyup = function(ev) { // Filter user keystrokes
+//-------------------------------------------------------
+
+function Session(command, prompt, input) {
+        var container = document.body
+        var session = this
+        this.command = command
+        this.prompt = prompt
+        this.input = input
+        this.command_id = 0
+
+        function focus() {
+                input.focus();
+                window.scrollTo(0, session.command.offsetTop);
+        }
+
+        function go() {
+                var pane = new Pane(session)
+                session.command_id++
+
+                container.insertBefore(pane.DOM, command)
+                prompt.replaceChild(makePrompt(session), prompt.firstChild)
+                pane.go(focus)
+        }
+
+        input.onkeyup = function(ev) { 
                 var prefix = input.value.slice(0, input.selectionStart)
-                if(input.value) {
-                        sugg( suggestionBox(session, prefix) );
-                        window.scrollTo(0, session.commander.offsetTop);
-                }
+                // and do something with the suggestion box
         }
  
         input.onkeydown = function(ev) { // Filter user keystrokes
                switch ( ev.keyCode ) {
-                case 13 /*RETURN*/:
-                        try { enter(ev); } 
+               case 13 /*RETURN*/:
+                        try { go(); } 
                         catch(e) { alert(e); }
                         finally { return false; }
                 }
         }
 
-        return input;
+        prompt.replaceChild(makePrompt(session), prompt.firstChild)
+        focus()
 }
 
-// The Session object holds the command line and old results.
-function Session(container) { 
-        this.command_id = 0;
-        this.container = container;
-
-        // The HTML form for the input line + accessories 
-        this.commander = document.createElement('div');
-        this.commander.setAttribute('class', 'command');
-
-        this.input_text = commandInput(this)
-        
-        this.container.appendChild(this.commander);
-
-        input_text.focus();
-}
-
-window.onload = function(){ Session(document.body); }
+session = new Session(
+                document.getElementById('command'),
+                document.getElementById('prompt'),
+                document.getElementById('input')
+               );
 
