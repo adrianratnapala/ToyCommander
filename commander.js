@@ -68,7 +68,7 @@ function runCommand( id, text, gotit ) {
 // hold output results and command bar (similar to a title bar)
 function Pane(session) {
         // snapshot the session
-        var text = session.input.value
+        var text = session.input.DOM.value
         var prompt_text_node = makePrompt(session)
         var id = session.command_id
 
@@ -113,48 +113,45 @@ function Pane(session) {
 //-------------------------------------------------------
 
 // FIX: we are losing the naming battle.
-function CommandInput(input, go) {
-        input.onkeyup = function(ev) { 
-                var prefix = input.value.slice(0, input.selectionStart)
+function Input(DOM, go) {
+        this.DOM = DOM
+        DOM.onkeyup = function(ev) { 
+                var prefix = this.value.slice(0, DOM.selectionStart)
                 // and do something with the suggestion box
         }
  
-        input.onkeydown = function(ev) { // Filter user keystrokes
+        DOM.onkeydown = function(ev) { // Filter user keystrokes
                switch ( ev.keyCode ) {
                case 13 /*RETURN*/:
                         try { go(); } 
                         catch(e) { alert(e); }
                         finally { return false; }
                 }
-        }       
+        }
 }
 
-function Session(command, prompt, input) {
-        var container = document.body
+function Session(commandDOM, promptDOM, inputDOM) {
         var session = this
-        this.command = command
-        this.prompt = prompt
-        this.input = input
+        var containerDOM = document.body
+        var input = this.input = new Input(inputDOM, go)
         this.command_id = 0
 
         function focus() {
-                input.focus();
-                window.scrollTo(0, session.command.offsetTop);
+                input.DOM.focus();
+                window.scrollTo(0, session.commandDOM.offsetTop);
         }
 
         function go() {
                 var pane = new Pane(session)
                 session.command_id++
 
-                container.insertBefore(pane.DOM, command)
-                prompt.replaceChild(makePrompt(session), prompt.firstChild)
+                containerDOM.insertBefore(pane.DOM, commandDOM)
+                promptDOM.replaceChild(makePrompt(session), 
+                                       promptDOM.firstChild)
                 pane.go(focus)
         }
 
-        this.command_input = new CommandInput(input, go)
-
-
-        prompt.replaceChild(makePrompt(session), prompt.firstChild)
+        promptDOM.replaceChild(makePrompt(session), promptDOM.firstChild)
         focus()
 }
 
