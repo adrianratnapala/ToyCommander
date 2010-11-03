@@ -50,4 +50,13 @@ body {
         border-width:2px;
 }
 
-
+.help {
+        width=100%;
+        background-color:black
+        display:table;
+        color:#aaa
+}
+.help-entry {
+       display:table-cell;
+        padding-right:0.5em;
+}

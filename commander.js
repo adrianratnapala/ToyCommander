@@ -14,6 +14,15 @@ function makePrompt(session) {
         return document.createTextNode( session.command_id + '$ ' );
 }
 
+function getSuggestions(prefix) {
+        var s = [] 
+        for (key in builtins) {
+                if( key.slice(0,prefix.length) == prefix )
+                        s.push(key)
+        }
+        return s
+}
+
 //-------------------------------------------------------
  
 // Request uri and call gotit(xmlHTTP, error) on the result.
@@ -114,14 +123,30 @@ function Pane(session) {
 
 //-------------------------------------------------------
 
-// FIX: we are losing the naming battle.
-function Input(DOM, go) {
+function sugListToDOM(sugg_list) {
+        var suggDOM = document.createElement('div')
+        for(idx in sugg_list ) { 
+                cDOM = document.createElement('span')
+                cDOM.appendChild( document.createTextNode(sugg_list[idx]))
+                cDOM.setAttribute('class', 'help-entry')
+                suggDOM.appendChild(cDOM)
+        }
+        return suggDOM
+}
+
+function Input(session, DOM, go) {
         this.DOM = DOM
-        DOM.onkeyup = function(ev) { 
-                var prefix = this.value.slice(0, DOM.selectionStart)
-                // and do something with the suggestion box
+
+        function suggest() {
+                var prefix  = DOM.value.slice(0, DOM.selectionStart)
+                var suggDOM = sugListToDOM( getSuggestions(prefix) )
+                var helpDOM = session.helpDOM
+                helpDOM.replaceChild(suggDOM, helpDOM.firstChild)
         }
  
+        DOM.onkeyup = function() { 
+                suggest()
+        }
         DOM.onkeydown = function(ev) { // Filter user keystrokes
                switch ( ev.keyCode ) {
                case 13 /*RETURN*/:
@@ -130,12 +155,16 @@ function Input(DOM, go) {
                         finally { return false; }
                 }
         }
+
+        suggest()
 }
 
-function Session(liveDOM, promptDOM, inputDOM) {
+function Session(liveDOM, promptDOM, inputDOM, helpDOM) {
+        this.liveDOM = liveDOM
+        this.helpDOM = helpDOM
         var session = this
         var containerDOM = document.body
-        var input = this.input = new Input(inputDOM, go)
+        var input = this.input = new Input(this, inputDOM, go)
         this.command_id = 0
 
         function focus() {
@@ -162,6 +191,7 @@ function Session(liveDOM, promptDOM, inputDOM) {
 session = new Session(
                 document.getElementById('command'),
                 document.getElementById('prompt'),
-                document.getElementById('input')
+                document.getElementById('input'),
+                document.getElementById('help')
                );
 
