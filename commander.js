@@ -72,15 +72,15 @@ function Pane(session) {
 
         // represent it: FIX: rationalise the CSS classses
         var promptDOM = document.createElement('span');
-        promptDOM.setAttribute( 'class', 'oprompt' );
+        promptDOM.setAttribute( 'class', 'prompt' );
         promptDOM.appendChild( makePrompt(session) );
 
         var bannerDOM = document.createElement('span');
-        bannerDOM.setAttribute('class','input');
+        bannerDOM.setAttribute('class','command');
         bannerDOM.appendChild( document.createTextNode(command_text) );
  
         var snapDOM = document.createElement('div');
-        snapDOM.setAttribute('class', 'ocommand');
+        snapDOM.setAttribute('class', 'snap');
         snapDOM.appendChild( promptDOM );
         snapDOM.appendChild( bannerDOM );
 
