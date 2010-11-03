@@ -1,15 +1,3 @@
-var builtins = {
-        'echo' : function(id, text, words) {
-                return { html : words.slice(1).join(' ' ) }
-        },
-        'e-cho': function(id, text, words) {
-                return { html : words.slice(1).join('-' ), error:true }
-        },
-        'oche' : function(id, text, words) {
-                return { html : words.slice(1).reverse().join(' ' ) }
-        }
-}
-
 function makePrompt(session) {
         return document.createTextNode( session.command_id + '$ ' );
 }
@@ -38,30 +26,20 @@ function ajaxGET(uri, gotit) {
         }
 }
 
-function responseToDOM(response) {
-        var DOM = document.createElement('div');
-        DOM.setAttribute('class', response.error ? 'error' : 'response')
-        DOM.innerHTML = response.html;
-        return DOM
-}
-
-// Finds a way to run the string "text" then calls gotit(responseDOM)
+// Runs the string "text", calls gotit(responseDOM)
 function runCommand( id, text, gotit ) {
         var words = text.replace('/\s+/g', ' ').split(' ');
-
         if (!words || words[0]=='')  
                 return gotit(null);
-
-        if(fun = builtins[words[0]])
-                return gotit(responseToDOM(fun(id, text, words)) )
          
         ajaxGET( encodeURI(words[0]), function(ajax, e) {
-                return gotit( responseToDOM({
-                        html : ajax.responseText,
-                        error: e,
-                   }))
+                var respDOM = document.createElement('div');
+                respDOM.setAttribute('class', e ? 'error' : 'response')
+                respDOM.innerHTML = ajax.responseText;
+                gotit(respDOM)
         })
 }
+
 
 //-------------------------------------------------------
 
@@ -112,23 +90,6 @@ function Pane(session) {
 
 //-------------------------------------------------------
 
-// FIX: we are losing the naming battle.
-function CommandInput(input, go) {
-        input.onkeyup = function(ev) { 
-                var prefix = input.value.slice(0, input.selectionStart)
-                // and do something with the suggestion box
-        }
- 
-        input.onkeydown = function(ev) { // Filter user keystrokes
-               switch ( ev.keyCode ) {
-               case 13 /*RETURN*/:
-                        try { go(); } 
-                        catch(e) { alert(e); }
-                        finally { return false; }
-                }
-        }       
-}
-
 function Session(command, prompt, input) {
         var container = document.body
         var session = this
@@ -151,8 +112,19 @@ function Session(command, prompt, input) {
                 pane.go(focus)
         }
 
-        this.command_input = new CommandInput(input, go)
-
+        input.onkeyup = function(ev) { 
+                var prefix = input.value.slice(0, input.selectionStart)
+                // and do something with the suggestion box
+        }
+ 
+        input.onkeydown = function(ev) { // Filter user keystrokes
+               switch ( ev.keyCode ) {
+               case 13 /*RETURN*/:
+                        try { go(); } 
+                        catch(e) { alert(e); }
+                        finally { return false; }
+                }
+        }
 
         prompt.replaceChild(makePrompt(session), prompt.firstChild)
         focus()
