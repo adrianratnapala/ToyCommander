@@ -7,7 +7,7 @@ body {
 }
 
 .command, .ocommand, .hcommand {
-        background-color:#111;
+        background-color:#222;
         border:0em;
         display:table;
         width:100%;
@@ -29,7 +29,7 @@ span.ocommand {
 }
 
 .hcommand {
-        background-color:#242;
+        background-color:#352;
 }
 
 .prompt, .oprompt {
