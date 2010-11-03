@@ -110,6 +110,23 @@ function Pane(session) {
 
 //-------------------------------------------------------
 
+// FIX: we are losing the naming battle.
+function CommandInput(input, go) {
+        input.onkeyup = function(ev) { 
+                var prefix = input.value.slice(0, input.selectionStart)
+                // and do something with the suggestion box
+        }
+ 
+        input.onkeydown = function(ev) { // Filter user keystrokes
+               switch ( ev.keyCode ) {
+               case 13 /*RETURN*/:
+                        try { go(); } 
+                        catch(e) { alert(e); }
+                        finally { return false; }
+                }
+        }       
+}
+
 function Session(command, prompt, input) {
         var container = document.body
         var session = this
@@ -132,19 +149,8 @@ function Session(command, prompt, input) {
                 pane.go(focus)
         }
 
-        input.onkeyup = function(ev) { 
-                var prefix = input.value.slice(0, input.selectionStart)
-                // and do something with the suggestion box
-        }
- 
-        input.onkeydown = function(ev) { // Filter user keystrokes
-               switch ( ev.keyCode ) {
-               case 13 /*RETURN*/:
-                        try { go(); } 
-                        catch(e) { alert(e); }
-                        finally { return false; }
-                }
-        }
+        this.command_input = new CommandInput(input, go)
+
 
         prompt.replaceChild(makePrompt(session), prompt.firstChild)
         focus()
