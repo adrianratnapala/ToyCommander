@@ -111,8 +111,7 @@ function Pane(session) {
 
 //-------------------------------------------------------
 
-// FIX: we are losing the naming battle.
-function Input(DOM, go) {
+function Input(session, DOM, go) {
         this.DOM = DOM
         DOM.onkeyup = function(ev) { 
                 var prefix = this.value.slice(0, DOM.selectionStart)
@@ -130,9 +129,10 @@ function Input(DOM, go) {
 }
 
 function Session(liveDOM, promptDOM, inputDOM) {
+        this.liveDOM = liveDOM
         var session = this
         var containerDOM = document.body
-        var input = this.input = new Input(inputDOM, go)
+        var input = this.input = new Input(this, inputDOM, go)
         this.command_id = 0
 
         function focus() {
