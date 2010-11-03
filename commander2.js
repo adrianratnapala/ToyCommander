@@ -71,6 +71,8 @@ function Pane(session) {
 
         var content = null, shown = null
         command_bar.onclick = function() {
+                if(!content)
+                        return
                 if(!shown) 
                         return DOM.appendChild(shown = content)
                 DOM.removeChild(shown)
