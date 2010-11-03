@@ -50,8 +50,13 @@ body {
         border-width:2px;
 }
 
-.suggestions {
+.help {
         width=100%;
-        height:100px;
         background-color:black
+        display:table;
+        color:#aaa
+}
+.help-entry {
+       display:table-cell;
+        padding-right:0.5em;
 }
