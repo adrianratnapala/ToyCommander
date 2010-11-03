@@ -77,7 +77,10 @@ function Pane(session) {
 
         var bannerDOM = document.createElement('span');
         bannerDOM.setAttribute('class','command');
-        bannerDOM.appendChild( document.createTextNode(command_text) );
+        bannerDOM.appendChild( command_text.replace(/\s+/g, '') ?
+                        document.createTextNode(command_text) :
+                        document.createElement('span') 
+                        );
  
         var snapDOM = document.createElement('div');
         snapDOM.setAttribute('class', 'snap');
