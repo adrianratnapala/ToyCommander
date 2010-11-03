@@ -67,44 +67,43 @@ function runCommand( id, text, gotit ) {
 
 // hold output results and command bar (similar to a title bar)
 function Pane(session) {
-        // snapshot the session
-        var text = session.input.DOM.value
-        var prompt_text_node = makePrompt(session)
-        var id = session.command_id
+        var command_text = this.command_text = session.input.DOM.value
+        var id = this.id = session.command_id
 
         // represent it: FIX: rationalise the CSS classses
-        var prompt = document.createElement('span');
-        prompt.setAttribute( 'class', 'oprompt' );
-        prompt.appendChild( prompt_text_node );
+        var promptDOM = document.createElement('span');
+        promptDOM.setAttribute( 'class', 'oprompt' );
+        promptDOM.appendChild( makePrompt(session) );
 
-        var input = document.createElement('span');
-        input.setAttribute('class','input');
-        input.appendChild( document.createTextNode(text) );
+        var bannerDOM = document.createElement('span');
+        bannerDOM.setAttribute('class','input');
+        bannerDOM.appendChild( document.createTextNode(command_text) );
  
-        var command_bar = document.createElement('div');
-        command_bar.setAttribute('class', 'ocommand');
-        command_bar.appendChild( prompt );
-        command_bar.appendChild( input );
+        var snapDOM = document.createElement('div');
+        snapDOM.setAttribute('class', 'ocommand');
+        snapDOM.appendChild( promptDOM );
+        snapDOM.appendChild( bannerDOM );
 
-        var DOM = document.createElement('div');
+        var DOM = this.DOM = document.createElement('div');
         DOM.setAttribute('class', 'pane');
-        DOM.appendChild( command_bar );
-        this.DOM = DOM
+        DOM.appendChild( snapDOM );
 
-        var content = null, shown = null
-        command_bar.onclick = function() {
-                if(!content)
+        // callbacks/methods -- session is no longer frozen
+
+        var contentDOM = null, shownDOM = null
+        snapDOM.onclick = function() {
+                if(!contentDOM)
                         return
-                if(!shown) 
-                        return DOM.appendChild(shown = content)
-                DOM.removeChild(shown)
-                shown = null
+                if(!shownDOM) 
+                        return DOM.appendChild(shownDOM = contentDOM)
+                DOM.removeChild(shownDOM)
+                shownDOM = null
         }
 
         this.go = function(gotit){
-                runCommand(id, text, function(respDOM){
+                runCommand(id, command_text, function(respDOM){
                         if(respDOM) 
-                                DOM.appendChild(content = shown = respDOM)
+                                DOM.appendChild(contentDOM=shownDOM=respDOM)
                         gotit()
                 })
         }
@@ -130,7 +129,7 @@ function Input(DOM, go) {
         }
 }
 
-function Session(commandDOM, promptDOM, inputDOM) {
+function Session(liveDOM, promptDOM, inputDOM) {
         var session = this
         var containerDOM = document.body
         var input = this.input = new Input(inputDOM, go)
@@ -138,14 +137,14 @@ function Session(commandDOM, promptDOM, inputDOM) {
 
         function focus() {
                 input.DOM.focus();
-                window.scrollTo(0, session.commandDOM.offsetTop);
+                window.scrollTo(0, liveDOM.offsetTop);
         }
 
         function go() {
                 var pane = new Pane(session)
                 session.command_id++
 
-                containerDOM.insertBefore(pane.DOM, commandDOM)
+                containerDOM.insertBefore(pane.DOM, liveDOM)
                 promptDOM.replaceChild(makePrompt(session), 
                                        promptDOM.firstChild)
                 pane.go(focus)
