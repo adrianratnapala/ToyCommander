@@ -182,7 +182,7 @@ function Session(liveDOM, promptDOM, inputDOM, helpDOM) {
                 pane.go(focus)
         }
 
-        containerDOM.onclick = focus
+        containerDOM.onkeydown = focus /*start typing in the right place*/
 
         promptDOM.replaceChild(makePrompt(session), promptDOM.firstChild)
         focus()
