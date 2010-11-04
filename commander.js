@@ -75,9 +75,9 @@ function runCommand( id, text, gotit ) {
 //-------------------------------------------------------
 
 // hold output results and command bar (similar to a title bar)
-function Pane(session) {
-        var command_text = this.command_text = session.input.DOM.value
-        var id = this.id = session.command_id
+function Pane(input) {
+        var command_text = this.command_text = input.DOM.value
+        var id = this.id = input.id
 
         // represent it: FIX: rationalise the CSS classses
         var promptDOM = document.createElement('span');
@@ -136,21 +136,33 @@ function sugListToDOM(sugg_list) {
 
 function Input(session, DOM, go) {
         this.DOM = DOM
-
+        this.id = session.command_id
+        input = this
+        
         function suggest() {
                 var prefix  = DOM.value.slice(0, DOM.selectionStart)
                 var suggDOM = sugListToDOM( getSuggestions(prefix) )
                 var helpDOM = session.helpDOM
                 helpDOM.replaceChild(suggDOM, helpDOM.firstChild)
         }
+
+        var focus = session.containerDOM.onkeydown = function() {
+                input.DOM.focus();
+                window.scrollTo(0, session.liveDOM.offsetTop);
+        }
  
         DOM.onkeyup = function() { 
                 suggest()
         }
+
         DOM.onkeydown = function(ev) { // Filter user keystrokes
                switch ( ev.keyCode ) {
                case 13 /*RETURN*/:
-                        try { go(); } 
+                        try { 
+                                var pane = new Pane(input)
+                                pane.go(focus)
+                                go(pane); 
+                        } 
                         catch(e) { alert(e); }
                         finally { return false; }
                 }
@@ -159,34 +171,25 @@ function Input(session, DOM, go) {
         var pDOM = session.promptDOM
         pDOM.replaceChild(makePrompt(session), pDOM.firstChild)
         suggest()
+        focus()
 }
 
 function Session(liveDOM, promptDOM, inputDOM, helpDOM) {
         var session = this
-        var containerDOM = document.body
         var input = null
+        var containerDOM = this.containerDOM = document.body
         this.command_id = 0
         this.liveDOM = liveDOM
         this.helpDOM = helpDOM
         this.promptDOM = promptDOM
 
-        function focus() {
-                input.DOM.focus();
-                window.scrollTo(0, liveDOM.offsetTop);
-        }
-
-        function go() {
-                var pane = new Pane(session)
+        function go(pane) {
                 session.command_id++
-
                 containerDOM.insertBefore(pane.DOM, liveDOM)
                 input = session.input = new Input(session, inputDOM, go)
-                pane.go(focus)
         }
-        containerDOM.onkeydown = focus /*start typing in the right place*/
 
         input = this.input = new Input(this, inputDOM, go)
-        focus()
 }
 
 session = new Session(
