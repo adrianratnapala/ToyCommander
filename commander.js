@@ -75,7 +75,7 @@ function runCommand( id, text, gotit ) {
 //-------------------------------------------------------
 
 // hold output results and command bar (similar to a title bar)
-function Pane(input) {
+function Pane(input, gotit) {
         var command_text = this.command_text = input.DOM.value
         var id = this.id = input.id
 
@@ -112,13 +112,10 @@ function Pane(input) {
                 shownDOM = null
         }
 
-        this.go = function(gotit){
-                runCommand(id, command_text, function(respDOM){
-                        if(respDOM) 
-                                DOM.appendChild(contentDOM=shownDOM=respDOM)
-                        gotit()
-                })
-        }
+        runCommand(id, command_text, function(respDOM){
+                if(respDOM) DOM.appendChild(contentDOM=shownDOM=respDOM)
+                if(gotit) gotit()
+        })
 }
 
 //-------------------------------------------------------
@@ -159,8 +156,7 @@ function Input(session, DOM, go) {
                switch ( ev.keyCode ) {
                case 13 /*RETURN*/:
                         try { 
-                                var pane = new Pane(input)
-                                pane.go(focus)
+                                var pane = new Pane(input, focus)
                                 go(pane); 
                         } 
                         catch(e) { alert(e); }
