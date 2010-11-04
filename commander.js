@@ -156,16 +156,19 @@ function Input(session, DOM, go) {
                 }
         }
 
+        var pDOM = session.promptDOM
+        pDOM.replaceChild(makePrompt(session), pDOM.firstChild)
         suggest()
 }
 
 function Session(liveDOM, promptDOM, inputDOM, helpDOM) {
-        this.liveDOM = liveDOM
-        this.helpDOM = helpDOM
         var session = this
         var containerDOM = document.body
-        var input = this.input = new Input(this, inputDOM, go)
+        var input = null
         this.command_id = 0
+        this.liveDOM = liveDOM
+        this.helpDOM = helpDOM
+        this.promptDOM = promptDOM
 
         function focus() {
                 input.DOM.focus();
@@ -177,14 +180,12 @@ function Session(liveDOM, promptDOM, inputDOM, helpDOM) {
                 session.command_id++
 
                 containerDOM.insertBefore(pane.DOM, liveDOM)
-                promptDOM.replaceChild(makePrompt(session), 
-                                       promptDOM.firstChild)
+                input = session.input = new Input(session, inputDOM, go)
                 pane.go(focus)
         }
-
         containerDOM.onkeydown = focus /*start typing in the right place*/
 
-        promptDOM.replaceChild(makePrompt(session), promptDOM.firstChild)
+        input = this.input = new Input(this, inputDOM, go)
         focus()
 }
 
