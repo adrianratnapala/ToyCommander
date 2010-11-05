@@ -154,7 +154,11 @@ function Input(session, DOM, go) {
         function suggest() {
                 var prefix  = DOM.value.slice(0, DOM.selectionStart)
                 var suggDOM = document.createElement('div')
-                helpToSuggDOM(help, prefix, suggDOM)
+
+                for(re in help) {
+                        if( prefix.match(re) )
+                                helpToSuggDOM(help[re], prefix, suggDOM)
+                }
                 
                 var helpDOM = session.helpDOM
                 helpDOM.replaceChild(suggDOM, helpDOM.firstChild)
