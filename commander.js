@@ -14,15 +14,6 @@ function makePrompt(session) {
         return document.createTextNode( session.command_id + '$ ' );
 }
 
-function getSuggestions(prefix) {
-        var s = [] 
-        for (key in builtins) {
-                if( key.slice(0,prefix.length) == prefix )
-                        s.push(key)
-        }
-        return s
-}
-
 //-------------------------------------------------------
  
 // Request uri and call gotit(xmlHTTP, error) on the result.
@@ -120,25 +111,51 @@ function Pane(input, gotit) {
 
 //-------------------------------------------------------
 
-function sugListToDOM(sugg_list) {
-        var suggDOM = document.createElement('div')
-        for(idx in sugg_list ) { 
+function helpToSuggDOM(help, prefix, DOM) 
+{
+        if( !help )
+                return
+        var common=null
+        for(var k in help ? help.items : []) {
+                if( !k.match('^'+prefix))
+                        continue
+                common =streq(common, k)
                 cDOM = document.createElement('span')
-                cDOM.appendChild( document.createTextNode(sugg_list[idx]))
+                cDOM.appendChild(document.createTextNode(k))
                 cDOM.setAttribute('class', 'help-entry')
-                suggDOM.appendChild(cDOM)
-        }
-        return suggDOM
+                DOM.appendChild(cDOM)
+        }        
+        return common
+}
+
+function streq(a,b) {
+        if( a == null )
+                return b
+
+        var chars=[]
+        for (var k=0; k < a.length && a[k] == b[k]; k++) 
+                chars.push( a[k] )
+        return chars.join('')
 }
 
 function Input(session, DOM, go) {
         this.DOM = DOM
         this.id = session.command_id
         input = this
+
+        var help = null
+        ajaxGET( 'help.json', function(ajax, error) {
+                if( !error ) {
+                        eval('help = ' + ajax.responseText)
+                        suggest()
+                }
+        })
         
         function suggest() {
                 var prefix  = DOM.value.slice(0, DOM.selectionStart)
-                var suggDOM = sugListToDOM( getSuggestions(prefix) )
+                var suggDOM = document.createElement('div')
+                helpToSuggDOM(help, prefix, suggDOM)
+                
                 var helpDOM = session.helpDOM
                 helpDOM.replaceChild(suggDOM, helpDOM.firstChild)
         }
