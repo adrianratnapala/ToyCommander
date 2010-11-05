@@ -152,12 +152,16 @@ function Input(session, DOM, go) {
         })
         
         function suggest() {
-                var prefix  = DOM.value.slice(0, DOM.selectionStart)
                 var suggDOM = document.createElement('div')
 
                 for(re in help) {
-                        if( prefix.match(re) )
-                                helpToSuggDOM(help[re], prefix, suggDOM)
+                        var prefix  = DOM.value.slice(0, DOM.selectionStart)
+                        var matches = prefix.match(re)
+                        var match_index = help[re].match_index
+                        if(!matches) continue
+                        prefix = matches[match_index ?  match_index : 0]
+                        console.log(match_index, prefix, matches)
+                        helpToSuggDOM(help[re], prefix, suggDOM)
                 }
                 
                 var helpDOM = session.helpDOM
