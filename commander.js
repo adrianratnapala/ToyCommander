@@ -155,7 +155,6 @@ function Helper (helpDOM) {
         }
 
         helpDOM.appendChild(document.createElement('div'))
-        console.log(helpDOM.childNodes.length)
 
         function makeHelpItem(k, help) {
                 var cDOM = document.createElement('span')
@@ -171,8 +170,12 @@ function Helper (helpDOM) {
                 return cDOM
         }
 
+        var prefix = ''
+        var help_db = ''
+        var sync = this.sync = function(new_help_db, new_prefix) {
+                if( typeof(new_prefix) == 'string' ) prefix=new_prefix
+                if( new_help_db ) help_db = new_help_db
 
-        function suggest(help_db, prefix) {
                 var dlist = filterHelp(help_db, prefix)
                 var newsuggDOM = document.createElement('div')
                 for (d in dlist) {
@@ -183,7 +186,13 @@ function Helper (helpDOM) {
                 suggDOM = newsuggDOM
         }
 
-        this.suggest = suggest
+        var ajax_help = []
+        ajaxGET( 'help.json', function(ajax, error) {
+                if( !error ) {
+                        eval('ajax_help = ' + ajax.responseText)
+                        sync(ajax_help)
+                }
+        })
 }
 
 
@@ -192,14 +201,6 @@ function Input(session, DOM, go) {
         this.id = session.command_id
         input = this
 
-        var ajax_help = []
-        ajaxGET( 'help.json', function(ajax, error) {
-                if( !error ) {
-                        eval('ajax_help = ' + ajax.responseText)
-                        suggest()
-                }
-        })
-
         helper = new Helper(session.helpDOM)
 
         var focus = session.containerDOM.onkeydown = function() {
@@ -207,9 +208,8 @@ function Input(session, DOM, go) {
                 window.scrollTo(0, session.liveDOM.offsetTop);
         }
  
-        var suggest = DOM.onkeyup = function() { 
-                var prefix = DOM.value.slice(0, DOM.selectionStart)
-                helper.suggest(ajax_help, prefix)
+        var suggest = DOM.onkeyup = function() {
+                helper.sync(null,  DOM.value.slice(0, DOM.selectionStart))
         }
 
         DOM.onkeydown = function(ev) { // Filter user keystrokes
