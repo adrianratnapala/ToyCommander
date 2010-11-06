@@ -121,11 +121,31 @@ function streq(a,b) {
         return chars.join('')
 }
 
-function Helper (DOM, helpDOM) {
+function filterHelp(help_db, prefix)
+{
+        var dlist = []
+        for(re in help_db) {
+                var matches = prefix.match(re)
+                var match_index = help_db[re].match_index
+                if(!matches) 
+                        continue
+                midfix = matches[match_index ?  match_index : 0]
+
+                help = help_db[re]
+                for(var k in help.items) {
+                        if( !k.match('^'+midfix))
+                                continue
+                        dlist.push([k, help.items[k]])
+                }
+        }
+        return dlist
+}
+
+
+function Helper (helpDOM) {
         helpDOM.appendChild(document.createElement('div'))
         var hlDOM = helpDOM.appendChild(document.createElement('div'))
         hlDOM.appendChild(document.createTextNode('---'))
-
 
         function makeHelpItem(k, help) {
                 var cDOM = document.createElement('span')
@@ -141,43 +161,17 @@ function Helper (DOM, helpDOM) {
                 return cDOM
         }
 
-        function helpToSuggDOM(help, prefix, DOM)
-        {
-                if( !help )
-                        return
-                var common=null
-                for(var k in help ? help.items : []) {
-                        if( !k.match('^'+prefix))
-                                continue
-                        common = streq(common, k)
-                        DOM.appendChild(makeHelpItem(k, help.items[k]))
-                }        
-                return common
-        }
 
-        function suggest(prefix) {
+        function suggest(help_db, prefix) {
+                var dlist = filterHelp(help_db, prefix)
                 var suggDOM = document.createElement('div')
-                for(re in ajax_help) {
-                        var prefix  = DOM.value.slice(0, DOM.selectionStart)
-                        var matches = prefix.match(re)
-                        var match_index = ajax_help[re].match_index
-                        if(!matches) continue
-                        prefix = matches[match_index ?  match_index : 0]
-                        helpToSuggDOM(ajax_help[re], prefix, suggDOM, hlDOM)
+                for (d in dlist) {
+                        de = dlist[d]
+                        suggDOM.appendChild(makeHelpItem(de[0], de[1]))
                 }
-                
-                glob=helpDOM
                 helpDOM.replaceChild(suggDOM, helpDOM.firstChild)
+                return suggDOM
         }
-
-        var ajax_help = null
-        ajaxGET( 'help.json', function(ajax, error) {
-                if( !error ) {
-                        eval('ajax_help = ' + ajax.responseText)
-                        suggest()
-                }
-        })
-
 
         this.suggest = suggest
 }
@@ -188,16 +182,24 @@ function Input(session, DOM, go) {
         this.id = session.command_id
         input = this
 
+        var ajax_help = []
+        ajaxGET( 'help.json', function(ajax, error) {
+                if( !error ) {
+                        eval('ajax_help = ' + ajax.responseText)
+                        suggest()
+                }
+        })
 
+        helper = new Helper(session.helpDOM)
 
-        helper = new Helper(DOM, session.helpDOM)
         var focus = session.containerDOM.onkeydown = function() {
                 input.DOM.focus();
                 window.scrollTo(0, session.liveDOM.offsetTop);
         }
  
-        DOM.onkeyup = function() { 
-                helper.suggest()
+        var suggest = DOM.onkeyup = function() { 
+                var prefix = DOM.value.slice(0, DOM.selectionStart)
+                helper.suggest(ajax_help, prefix)
         }
 
         DOM.onkeydown = function(ev) { // Filter user keystrokes
@@ -214,7 +216,6 @@ function Input(session, DOM, go) {
 
         var pDOM = session.promptDOM
         pDOM.replaceChild(makePrompt(session), pDOM.firstChild)
-        helper.suggest()
         focus()
 }
 
