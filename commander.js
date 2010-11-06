@@ -111,23 +111,6 @@ function Pane(input, gotit) {
 
 //-------------------------------------------------------
 
-function helpToSuggDOM(help, prefix, DOM) 
-{
-        if( !help )
-                return
-        var common=null
-        for(var k in help ? help.items : []) {
-                if( !k.match('^'+prefix))
-                        continue
-                common =streq(common, k)
-                cDOM = document.createElement('span')
-                cDOM.appendChild(document.createTextNode(k))
-                cDOM.setAttribute('class', 'help-entry')
-                DOM.appendChild(cDOM)
-        }        
-        return common
-}
-
 function streq(a,b) {
         if( a == null )
                 return b
@@ -138,43 +121,83 @@ function streq(a,b) {
         return chars.join('')
 }
 
+function Helper (DOM, helpDOM) {
+        helpDOM.appendChild(document.createElement('div'))
+        var hlDOM = helpDOM.appendChild(document.createElement('div'))
+        hlDOM.appendChild(document.createTextNode('---'))
+
+
+        function makeHelpItem(k, help) {
+                var cDOM = document.createElement('span')
+                var ttDOM = document.createTextNode(k)
+                var thDOM = document.createTextNode(help)
+
+                cDOM.appendChild(ttDOM)
+                cDOM.setAttribute('class', 'help-entry')
+
+                cDOM.onmouseover = function() {
+                        hlDOM.replaceChild( thDOM, hlDOM.firstChild )
+                }
+                return cDOM
+        }
+
+        function helpToSuggDOM(help, prefix, DOM)
+        {
+                if( !help )
+                        return
+                var common=null
+                for(var k in help ? help.items : []) {
+                        if( !k.match('^'+prefix))
+                                continue
+                        common = streq(common, k)
+                        DOM.appendChild(makeHelpItem(k, help.items[k]))
+                }        
+                return common
+        }
+
+        function suggest(prefix) {
+                var suggDOM = document.createElement('div')
+                for(re in ajax_help) {
+                        var prefix  = DOM.value.slice(0, DOM.selectionStart)
+                        var matches = prefix.match(re)
+                        var match_index = ajax_help[re].match_index
+                        if(!matches) continue
+                        prefix = matches[match_index ?  match_index : 0]
+                        helpToSuggDOM(ajax_help[re], prefix, suggDOM, hlDOM)
+                }
+                
+                glob=helpDOM
+                helpDOM.replaceChild(suggDOM, helpDOM.firstChild)
+        }
+
+        var ajax_help = null
+        ajaxGET( 'help.json', function(ajax, error) {
+                if( !error ) {
+                        eval('ajax_help = ' + ajax.responseText)
+                        suggest()
+                }
+        })
+
+
+        this.suggest = suggest
+}
+
+
 function Input(session, DOM, go) {
         this.DOM = DOM
         this.id = session.command_id
         input = this
 
-        var help = null
-        ajaxGET( 'help.json', function(ajax, error) {
-                if( !error ) {
-                        eval('help = ' + ajax.responseText)
-                        suggest()
-                }
-        })
-        
-        function suggest() {
-                var suggDOM = document.createElement('div')
 
-                for(re in help) {
-                        var prefix  = DOM.value.slice(0, DOM.selectionStart)
-                        var matches = prefix.match(re)
-                        var match_index = help[re].match_index
-                        if(!matches) continue
-                        prefix = matches[match_index ?  match_index : 0]
-                        console.log(match_index, prefix, matches)
-                        helpToSuggDOM(help[re], prefix, suggDOM)
-                }
-                
-                var helpDOM = session.helpDOM
-                helpDOM.replaceChild(suggDOM, helpDOM.firstChild)
-        }
 
+        helper = new Helper(DOM, session.helpDOM)
         var focus = session.containerDOM.onkeydown = function() {
                 input.DOM.focus();
                 window.scrollTo(0, session.liveDOM.offsetTop);
         }
  
         DOM.onkeyup = function() { 
-                suggest()
+                helper.suggest()
         }
 
         DOM.onkeydown = function(ev) { // Filter user keystrokes
@@ -191,7 +214,7 @@ function Input(session, DOM, go) {
 
         var pDOM = session.promptDOM
         pDOM.replaceChild(makePrompt(session), pDOM.firstChild)
-        suggest()
+        helper.suggest()
         focus()
 }
 
@@ -203,6 +226,7 @@ function Session(liveDOM, promptDOM, inputDOM, helpDOM) {
         this.liveDOM = liveDOM
         this.helpDOM = helpDOM
         this.promptDOM = promptDOM
+
 
         function go(pane) {
                 session.command_id++
