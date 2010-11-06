@@ -60,7 +60,7 @@ body {
 }
 .help-entry {
         display:table-cell;
-        padding-right:0.5em;
+        padding:0em 0.5em 0em 0.5em;
         border:1px;
         white-space:nowrap;
         border-style:none dashed solid none;
