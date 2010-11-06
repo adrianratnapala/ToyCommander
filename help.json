@@ -1,0 +1,28 @@
+{
+'^(.* )?(.*)':   {
+        'match_index':2,
+        'items':{  
+                'hatter' : 'Is mad about tea.',
+                'white rabbit' : 'Is late.',
+                'dormouse' : 'Needs the caffine (see hatter).',
+                'teacup' : 'Where dormouse is.',
+                'walrus' : 'Freind of carpenter, but not of oysters.',
+                'carpenter' : 'Freind of walrus, a hypocrite.',
+                'tweedle dum' : 'A Rattle Battler.',
+                'tweedle dee' : 'The other one.',
+                'duchess' : 'See cook.', 
+                'cook' : 'See duchess.',
+                'red queen' : 'Not the Queen of Hearts.',
+                'red knight': 'Fights the white knight.',
+                'g' : 'A whole new world',
+                }
+        },
+
+'^g':    {
+        'items': {
+                'grain' : 'For whisky.',
+                'gain'  : 'How you afford whisky.',
+                'gin'   : 'Not whisky.',
+                },
+        },
+}
