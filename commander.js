@@ -143,9 +143,19 @@ function filterHelp(help_db, prefix)
 
 
 function Helper (helpDOM) {
+        var emptyDOM = document.createTextNode('')
+        while(helpDOM.firstChild)
+                helpDOM.removeChild(helpDOM.firstChild);
+        var suggDOM=helpDOM.appendChild( document.createElement('div') )
+        var descDOM=helpDOM.appendChild(document.createElement('div'))
+        descDOM.appendChild(emptyDOM)
+
+        helpDOM.onmouseout = function() {
+                descDOM.replaceChild( emptyDOM, descDOM.firstChild )
+        }
+
         helpDOM.appendChild(document.createElement('div'))
-        var hlDOM = helpDOM.appendChild(document.createElement('div'))
-        hlDOM.appendChild(document.createTextNode('---'))
+        console.log(helpDOM.childNodes.length)
 
         function makeHelpItem(k, help) {
                 var cDOM = document.createElement('span')
@@ -156,7 +166,7 @@ function Helper (helpDOM) {
                 cDOM.setAttribute('class', 'help-entry')
 
                 cDOM.onmouseover = function() {
-                        hlDOM.replaceChild( thDOM, hlDOM.firstChild )
+                        descDOM.replaceChild( thDOM, descDOM.firstChild )
                 }
                 return cDOM
         }
@@ -164,13 +174,13 @@ function Helper (helpDOM) {
 
         function suggest(help_db, prefix) {
                 var dlist = filterHelp(help_db, prefix)
-                var suggDOM = document.createElement('div')
+                var newsuggDOM = document.createElement('div')
                 for (d in dlist) {
                         de = dlist[d]
-                        suggDOM.appendChild(makeHelpItem(de[0], de[1]))
+                        newsuggDOM.appendChild(makeHelpItem(de[0], de[1]))
                 }
-                helpDOM.replaceChild(suggDOM, helpDOM.firstChild)
-                return suggDOM
+                suggDOM = helpDOM.replaceChild(newsuggDOM, suggDOM)
+                suggDOM = newsuggDOM
         }
 
         this.suggest = suggest
