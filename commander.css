@@ -58,10 +58,10 @@ body {
         color:#fff
 }
 .help-entry {
-       display:table-cell;
-       padding-right:0.5em;
-       border:1px;
-       border-style:none dashed solid none;
-       border-color:#222;
-       color:#aaa
+        display:table-cell;
+        padding-right:0.5em;
+        border:1px;
+        border-style:none dashed solid none;
+        border-color:#222;
+        color:#aaa;
 }
