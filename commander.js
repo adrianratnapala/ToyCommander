@@ -186,6 +186,17 @@ function Helper (helpDOM) {
                 suggDOM = newsuggDOM
         }
 
+        var continueFrom = this.continueFrom = function(prefix) {
+                var common = null;
+                dlist = filterHelp(help_db, prefix)
+                if ( dlist.length == 1 )
+                        return dlist[0][0] + ' '
+                for(k in dlist) 
+                        common=streq(common, dlist[k][0])
+                console.log(common)
+                return common
+        }
+
         var ajax_help = []
         ajaxGET( 'help.json', function(ajax, error) {
                 if( !error ) {
@@ -211,6 +222,18 @@ function Input(session, DOM, go) {
         var suggest = DOM.onkeyup = function() {
                 helper.sync(null,  DOM.value.slice(0, DOM.selectionStart))
         }
+                       
+        var tabcontinue = function() {
+                /* FIX? we should use more regex cleverness? */
+                var prefix = DOM.value.slice(0, DOM.selectionStart)
+                prefix = helper.continueFrom(prefix);
+                if(prefix) {
+                        DOM.value = prefix + 
+                                DOM.value.slice(DOM.selectionStart)
+                        return false
+                }
+        }
+
 
         DOM.onkeydown = function(ev) { // Filter user keystrokes
                switch ( ev.keyCode ) {
@@ -221,6 +244,8 @@ function Input(session, DOM, go) {
                         } 
                         catch(e) { alert(e); }
                         finally { return false; }
+                case 9 /*TAB*/:
+                        return tabcontinue()
                 }
         }
 
