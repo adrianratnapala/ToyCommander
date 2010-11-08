@@ -209,6 +209,46 @@ function Helper (helpDOM) {
         })
 }
 
+function history(session, DOM, ev) {
+        var prefix = DOM.value
+
+        function match(idx) {
+                var pane = session.panes[idx]
+                var text = pane.command_text
+                if( text.replace(/\s/, '') == '' )
+                        return null
+                if( text.slice(0, prefix.length) != prefix )
+                        return null
+                return text
+        }
+
+        var u
+        var idx = session.panes.length
+        var retkd = DOM.onkeydown
+        var kd = DOM.onkeydown = function(ev) {
+                switch ( ev.keyCode ) {
+                case 38/*UP*/: 
+                        u = DOM.value
+                        while(idx > 0 && !(u=match(--idx)));
+                        break
+                case 40/*UP*/: 
+                        u = prefix
+                        while( (idx+1) < session.panes.length  &&
+                              !(u=match(++idx)));
+                        break
+
+                default :  
+                        DOM.onkeydown = retkd
+                        break
+                }
+                DOM.value = u
+                DOM.setSelectionRange(u.length, u.length)
+                return false
+        }
+
+        kd(ev)
+        return false
+}
 
 function Input(session, DOM, go) {
         this.DOM = DOM
@@ -227,7 +267,6 @@ function Input(session, DOM, go) {
         }
                        
         var tabcontinue = function() {
-                /* FIX? we should use more regex cleverness? */
                 var prefix = DOM.value.slice(0, DOM.selectionStart)
                 prefix = helper.continueFrom(prefix);
                 if(prefix) {
@@ -235,64 +274,6 @@ function Input(session, DOM, go) {
                                 DOM.value.slice(DOM.selectionStart)
                         return false
                 }
-        }
-
-        var histIndex = 0
-        var hist_up = function() {
-                var prefix = DOM.value.slice(0, DOM.selectionStart)
-                for(;; histIndex--) {
-                        var text = session.panes[histIndex].command_text
-                        if( text.replace(/\s/, '') == '' )
-                                continue
-                        if( text.slice( prefix.length ) != prefix )
-                                continue
-                        DOM.value = text
-                }
-        }
-
-        function do_history(ev, ret) {
-                var prefix = DOM.value
-
-                function match(idx) {
-                        var pane = session.panes[idx]
-                        var text = pane.command_text
-                        if( text.replace(/\s/, '') == '' )
-                                return null
-                        if( text.slice(0, prefix.length) != prefix )
-                                return null
-                        return text
-                }
- 
-
-                var idx = session.panes.length
-                var retkd = DOM.onkeydown
-                var kd = DOM.onkeydown = function(ev) {
-                        var u = DOM.value
-                        switch ( ev.keyCode ) {
-                        case 38/*UP*/: 
-                                while(idx > 0 && !(u=match(--idx)));
-                                break
-                        case 40/*UP*/: 
-                                idx++
-                                if( idx >= session.panes.length ) {
-                                        u = prefix
-                                        idx = session.panes.length
-                                }
-                                else while(idx < session.panes.length 
-                                       && !(u=match(idx)));
-                                break
- 
-                        default :  
-                                DOM.onkeydown = retkd
-                                break
-                        }
-                        DOM.value = u
-                        DOM.setSelectionRange(u.length, u.length)
-                        return false
-                }
-
-                kd(ev)
-                return false
         }
 
         DOM.onkeydown = function(ev) { // Filter user keystrokes
@@ -307,7 +288,7 @@ function Input(session, DOM, go) {
                         catch(e) { alert(e); }
                         finally { return false; }
                case  9 /*TAB*/ : return tabcontinue()
-               case 38 /*UP*/  : return do_history(ev)
+               case 38 /*UP*/  : return history(session, DOM, ev)
                }
         }
 
