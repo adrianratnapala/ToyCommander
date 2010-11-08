@@ -1,4 +1,39 @@
 {
+        'items' : {
+                'look' : 'see something.',
+                'talk' : 'hear something.'
+        },
+
+        'cont' : ['WONDERS', 'GLASSES'],
+
+
+'WONDERS' : { 
+                'items' : {
+                        'cook' : 'See duchess.',
+                        'dormouse' : 'Needs the caffine (see hatter).',
+                        'duchess' : 'See cook.', 
+                        'hatter' : 'Is mad about tea.',
+                        'white_rabbit' : 'Is late.',
+                        'teacup' : 'Where dormouse is.',
+                },
+                'cont' : ['WONDERS', '']
+        }
+,
+'GLASSES' : {
+                'items' : {
+                        'carpenter' : 'Freind of walrus, a hypocrite.',
+                        'walrus' : 'Freind of carpenter, but not of oysters.',
+                        'tweedle_dum' : 'A Rattle Battler.',
+                        'tweedle_dee' : 'The other one.',
+                        'red_queen' : 'Not the Queen of Hearts.',
+                        'red_knight': 'Fights the white knight.',
+                },
+
+                        'cont' : ['GLASSES', '']
+        }
+}
+
+/*
 '^(.* )?(.*)':   {
         'match_index':2,
         'items':{  
@@ -26,3 +61,4 @@
                 },
         },
 }
+*/

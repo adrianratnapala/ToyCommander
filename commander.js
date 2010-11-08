@@ -121,26 +121,29 @@ function streq(a,b) {
         return chars.join('')
 }
 
-function filterHelp(help_db, prefix)
-{
-        var dlist = []
-        for(re in help_db) {
-                var matches = prefix.match(re)
-                var match_index = help_db[re].match_index
-                if(!matches) 
-                        continue
-                midfix = matches[match_index ?  match_index : 0]
 
-                help = help_db[re]
-                for(var k in help.items) {
-                        if( !k.match('^'+midfix))
-                                continue
-                        dlist.push([k, help.items[k]])
+function filterHelp(rdb, db, segs) {
+        if( !segs.length || !db )
+                return []
+        
+        var text = segs[0]
+        var ilist=[]
+        if (segs.length==1) {
+                console.log(text + '|', db)
+                for( var k in db.items )
+                        if( k.slice(0, text.length) == text)
+                                ilist.push([k, db.items[k]])
+        } else if( db.items[text] ) {
+                for( var ci in db.cont ) { 
+                        var sub_db = rdb[db.cont[ci]]
+                        var ssegs = segs.slice(1)
+                        var nl = filterHelp(rdb, sub_db, ssegs)
+                        ilist = ilist.concat(nl)
                 }
         }
-        return dlist
+        return ilist
+        
 }
-
 
 function Helper (helpDOM) {
         var emptyDOM = document.createTextNode('')
@@ -176,7 +179,8 @@ function Helper (helpDOM) {
                 if( typeof(new_prefix) == 'string' ) prefix=new_prefix
                 if( new_help_db ) help_db = new_help_db
 
-                var dlist = filterHelp(help_db, prefix)
+                var segs = prefix.split(/\s/)
+                var dlist = filterHelp(help_db, help_db, segs)
                 var newsuggDOM = document.createElement('div')
                 for (d in dlist) {
                         de = dlist[d]
@@ -187,14 +191,14 @@ function Helper (helpDOM) {
         }
 
         var continueFrom = this.continueFrom = function(prefix) {
-                var common = null;
-                dlist = filterHelp(help_db, prefix)
+                var ext = null;
+                var segs = prefix.split(/\s/)
+                dlist = filterHelp(help_db, help_db, segs)
                 if ( dlist.length == 1 )
-                        return dlist[0][0] + ' '
-                for(k in dlist) 
-                        common=streq(common, dlist[k][0])
-                console.log(common)
-                return common
+                        ext = dlist[0][0] + ' '
+                else for(k in dlist) 
+                        ext = streq(ext, dlist[k][0])
+                return prefix + ext.slice(segs.pop().length)
         }
 
         var ajax_help = []
