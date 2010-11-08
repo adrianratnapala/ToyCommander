@@ -18,7 +18,6 @@ function makePrompt(session) {
  
 // Request uri and call gotit(xmlHTTP, error) on the result.
 function ajaxGET(uri, gotit) {
-        // FIX: crazy error return type.
         var ajax = new XMLHttpRequest();
 
         /* Request results from server. */
@@ -70,7 +69,6 @@ function Pane(input, gotit) {
         var command_text = this.command_text = input.DOM.value
         var id = this.id = input.id
 
-        // represent it: FIX: rationalise the CSS classses
         var promptDOM = document.createElement('span');
         promptDOM.setAttribute( 'class', 'prompt' );
         promptDOM.appendChild( makePrompt(session) );
@@ -120,7 +118,6 @@ function streq(a,b) {
                 chars.push( a[k] )
         return chars.join('')
 }
-
 
 function filterHelp(rdb, db, segs) {
         if( !segs.length || !db )
@@ -280,10 +277,9 @@ function Input(session, DOM, go) {
                switch ( ev.keyCode ) {
                case 13 /*RETURN*/:
                         try { 
-                                //FIX: why does pane mess with input.DOM?
                                 var pane = new Pane(input, focus)
+                                DOM.value = ''
                                 go(pane); 
-                                input.DOM.value = ''
                         } 
                         catch(e) { alert(e); }
                         finally { return false; }
