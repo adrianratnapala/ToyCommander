@@ -94,19 +94,6 @@ function Pane(input, gotit) {
         var command_text = this.command_text = input.DOM.value
         var id = this.id = input.id
 
-        // snapshot = prompt banner
-        /* FIX: shall it stay or shall it go?
-        var promptDOM = document.createElement('span');
-        promptDOM.setAttribute( 'class', 'prompt' );
-        promptDOM.appendChild( makePrompt(session) );
-
-        var bannerDOM = document.createElement('span');
-        bannerDOM.setAttribute('class','command');
-        bannerDOM.appendChild( command_text.replace(/\s+/g, '') ?
-                        document.createTextNode(command_text) :
-                        document.createElement('span') 
-                        );
-                */
         var pt = makePrompt(session) // FIX: do not use session
         var ct = command_text.replace(/\s+/g, '') ? 
                         command_text : '<span></span>'
@@ -114,11 +101,6 @@ function Pane(input, gotit) {
         snapDOM.setAttribute('class', 'snap');
         snapDOM.innerHTML = "<span class=prompt>" + pt + "</span>" +
                             "<span class=command>" + ct + "</span>"
-
-        /* FIX: shall it stay or shall it go?
-        snapDOM.appendChild( promptDOM );
-        snapDOM.appendChild( bannerDOM );
-        */
 
         // pane == [prompt response]
         var DOM = this.DOM = document.createElement('div');
@@ -142,6 +124,7 @@ function Pane(input, gotit) {
 
 //-------------------------------------------------------
 
+// FIX: this function is senseless, fix continueFrom!
 /* if a == null, return b.  Otherwise return the common stem of both. ??? */
 function streq(a,b) {
         if( a == null )
