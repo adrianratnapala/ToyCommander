@@ -5,6 +5,9 @@ Near plan
 9) Suggestions & autocompletion.
 11) Indicate which panes are folded vs. empty, how much is in them.
 12) Server side autocomplete suggestions.
+13) Figure out why we don't send cmd line parameters to the server,
+        and whether this is a good idea.
+14) Understand the fix comments and either fix them or move them here.
 
 
 Client/Server plans

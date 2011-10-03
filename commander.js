@@ -1,3 +1,13 @@
+/* Builtin commands: maps command name strings to functions which
+   directly execute them.  Each function takes inputs
+        id:    The command_id, aka what incrments when the user hits enter.
+        text:  Full text of the command line.
+        words: Command line split into whitespace separated words.      
+
+   Each one outputs
+        html:  The response to present to the user (in HTML format)
+        error: If true, the result is somehow an error.
+*/
 var builtins = {
         'echo' : function(id, text, words) {
                 return { html : words.slice(1).join(' ' ) }
@@ -10,22 +20,23 @@ var builtins = {
         }
 }
 
-function makePrompt(session) {
-        return document.createTextNode( session.command_id + '$ ' );
+/* Given the current session status, return a command prompt string. */
+function makePrompt(session) 
+{
+        return session.command_id + '$ ';
 }
 
 //-------------------------------------------------------
  
 // Request uri and call gotit(xmlHTTP, error) on the result.
-function ajaxGET(uri, gotit) {
+function ajaxGET(uri, gotit) 
+{
         var ajax = new XMLHttpRequest();
 
         /* Request results from server. */
         ajax.onreadystatechange = function() {
-                if(this.readyState == 4) {
-                        var status = ajax.status
-                        gotit(ajax, (status==200) ? false : status)
-                }
+                if(this.readyState == 4) 
+                        gotit(ajax, (ajax.status==200) ? false : ajax.status)
         }
 
         try {
@@ -37,6 +48,7 @@ function ajaxGET(uri, gotit) {
         }
 }
 
+// Convert an ajaxGET result into a DIV, coloured red if it's a error 
 function responseToDOM(response) {
         var DOM = document.createElement('div');
         DOM.setAttribute('class', response.error ? 'error' : 'response')
@@ -44,31 +56,46 @@ function responseToDOM(response) {
         return DOM
 }
 
-// Finds a way to run the string "text" then calls gotit(responseDOM)
+/*
+  Executes command text, runs gotit on the result.  Execute means:
+
+   DO NOTHING      (except call gotit), if there is no non-whitespace text
+   EXECUTE BUILTIN if the first word of text is a builtin, otherwise
+   FETCH THE URI   derived b encoding the first word.
+*/
 function runCommand( id, text, gotit ) {
-        var words = text.replace('/\s+/g', ' ').split(' ');
+        var words = text.split(/\s+/);
 
         if (!words || words[0]=='')  
                 return gotit(null);
 
         if(fun = builtins[words[0]])
-                return gotit(responseToDOM(fun(id, text, words)) )
+                return gotit(responseToDOM(fun(id, text, words)))
          
         ajaxGET( encodeURI(words[0]), function(ajax, e) {
                 return gotit( responseToDOM({
-                        html : ajax.responseText,
+                        html : ajax ? ajax.responseText : ''+e,
                         error: e,
                    }))
         })
 }
 
-//-------------------------------------------------------
+/*
+  Pane object - the record of a previously executed command.  
 
-// hold output results and command bar (similar to a title bar)
+  A pane comprises (a) a "snapshot" which displays that command's prompt and
+  command text and (b) and a content area, which is whatever DOM object was
+  returned as result of the command.  Clicking the snapshot toggles the content
+  area in and out of sight.  This constructor takes an "input" object,
+  describing a not-yet-run command, saves some if its contents as a Pane
+  object, executes the command and displays the results.
+*/
 function Pane(input, gotit) {
         var command_text = this.command_text = input.DOM.value
         var id = this.id = input.id
 
+        // snapshot = prompt banner
+        /* FIX: shall it stay or shall it go?
         var promptDOM = document.createElement('span');
         promptDOM.setAttribute( 'class', 'prompt' );
         promptDOM.appendChild( makePrompt(session) );
@@ -79,40 +106,48 @@ function Pane(input, gotit) {
                         document.createTextNode(command_text) :
                         document.createElement('span') 
                         );
- 
+                */
+        var pt = makePrompt(session) // FIX: do not use session
+        var ct = command_text.replace(/\s+/g, '') ? 
+                        command_text : '<span></span>'
         var snapDOM = document.createElement('div');
         snapDOM.setAttribute('class', 'snap');
+        snapDOM.innerHTML = "<span class=prompt>" + pt + "</span>" +
+                            "<span class=command>" + ct + "</span>"
+
+        /* FIX: shall it stay or shall it go?
         snapDOM.appendChild( promptDOM );
         snapDOM.appendChild( bannerDOM );
+        */
 
+        // pane == [prompt response]
         var DOM = this.DOM = document.createElement('div');
         DOM.setAttribute('class', 'pane');
         DOM.appendChild( snapDOM );
-
-        // callbacks/methods -- session is no longer frozen
-
+        
         var contentDOM = null, shownDOM = null
-        snapDOM.onclick = function() {
-                if(!contentDOM)
-                        return
-                if(!shownDOM) 
-                        return DOM.appendChild(shownDOM = contentDOM)
-                DOM.removeChild(shownDOM)
-                shownDOM = null
-        }
-
         runCommand(id, command_text, function(respDOM){
                 if(respDOM) DOM.appendChild(contentDOM=shownDOM=respDOM)
                 if(gotit) gotit()
         })
+
+        // make the snapshot clickable
+        snapDOM.onclick = function() {
+                if(!contentDOM) return
+                if(!shownDOM) return DOM.appendChild(shownDOM = contentDOM)
+                DOM.removeChild(shownDOM)
+                shownDOM = null
+        }
 }
 
 //-------------------------------------------------------
 
+/* if a == null, return b.  Otherwise return the common stem of both. ??? */
 function streq(a,b) {
         if( a == null )
                 return b
 
+        // FIX: surely there is a better way to implement  this.
         var chars=[]
         for (var k=0; k < a.length && a[k] == b[k]; k++) 
                 chars.push( a[k] )
@@ -199,7 +234,9 @@ function Helper (helpDOM) {
 
         var ajax_help = []
         ajaxGET( 'help.json', function(ajax, error) {
-                if( !error ) {
+                console.log(ajax)
+                console.log(error)
+                if( ajax && !error ) {
                         eval('ajax_help = ' + ajax.responseText)
                         sync(ajax_help)
                 }
@@ -262,7 +299,7 @@ function Input(session, DOM, go) {
         var suggest = DOM.onkeyup = function() {
                 helper.sync(null,  DOM.value.slice(0, DOM.selectionStart))
         }
-                       
+                      
         var tabcontinue = function() {
                 var prefix = DOM.value.slice(0, DOM.selectionStart)
                 prefix = helper.continueFrom(prefix);
@@ -289,7 +326,8 @@ function Input(session, DOM, go) {
         }
 
         var pDOM = session.promptDOM
-        pDOM.replaceChild(makePrompt(session), pDOM.firstChild)
+        var ptextDOM = document.createTextNode(makePrompt(session))
+        pDOM.replaceChild(ptextDOM, pDOM.firstChild)
         focus()
 }
 
