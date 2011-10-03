@@ -56,7 +56,7 @@ function runCommand( id, text, gotit ) {
          
         ajaxGET( encodeURI(words[0]), function(ajax, e) {
                 return gotit( responseToDOM({
-                        html : ajax.responseText,
+                        html : ajax ? ajax.responseText : ''+e,
                         error: e,
                    }))
         })
@@ -199,7 +199,9 @@ function Helper (helpDOM) {
 
         var ajax_help = []
         ajaxGET( 'help.json', function(ajax, error) {
-                if( !error ) {
+                console.log(ajax)
+                console.log(error)
+                if( ajax && !error ) {
                         eval('ajax_help = ' + ajax.responseText)
                         sync(ajax_help)
                 }
