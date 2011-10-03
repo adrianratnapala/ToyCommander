@@ -18,7 +18,6 @@ function makePrompt(session) {
  
 // Request uri and call gotit(xmlHTTP, error) on the result.
 function ajaxGET(uri, gotit) {
-        // FIX: crazy error return type.
         var ajax = new XMLHttpRequest();
 
         /* Request results from server. */
@@ -70,7 +69,6 @@ function Pane(input, gotit) {
         var command_text = this.command_text = input.DOM.value
         var id = this.id = input.id
 
-        // represent it: FIX: rationalise the CSS classses
         var promptDOM = document.createElement('span');
         promptDOM.setAttribute( 'class', 'prompt' );
         promptDOM.appendChild( makePrompt(session) );
@@ -121,7 +119,6 @@ function streq(a,b) {
         return chars.join('')
 }
 
-
 function filterHelp(rdb, db, segs) {
         if( !segs.length || !db )
                 return []
@@ -129,7 +126,6 @@ function filterHelp(rdb, db, segs) {
         var text = segs[0]
         var ilist=[]
         if (segs.length==1) {
-                console.log(text + '|', db)
                 for( var k in db.items )
                         if( k.slice(0, text.length) == text)
                                 ilist.push([k, db.items[k]])
@@ -210,6 +206,46 @@ function Helper (helpDOM) {
         })
 }
 
+function history(session, DOM, ev) {
+        var prefix = DOM.value
+
+        function match(idx) {
+                var pane = session.panes[idx]
+                var text = pane.command_text
+                if( text.replace(/\s/, '') == '' )
+                        return null
+                if( text.slice(0, prefix.length) != prefix )
+                        return null
+                return text
+        }
+
+        var u
+        var idx = session.panes.length
+        var retkd = DOM.onkeydown
+        var kd = DOM.onkeydown = function(ev) {
+                switch ( ev.keyCode ) {
+                case 38/*UP*/: 
+                        u = DOM.value
+                        while(idx > 0 && !(u=match(--idx)));
+                        break
+                case 40/*UP*/: 
+                        u = prefix
+                        while( (idx+1) < session.panes.length  &&
+                              !(u=match(++idx)));
+                        break
+
+                default :  
+                        DOM.onkeydown = retkd
+                        break
+                }
+                DOM.value = u
+                DOM.setSelectionRange(u.length, u.length)
+                return false
+        }
+
+        kd(ev)
+        return false
+}
 
 function Input(session, DOM, go) {
         this.DOM = DOM
@@ -228,7 +264,6 @@ function Input(session, DOM, go) {
         }
                        
         var tabcontinue = function() {
-                /* FIX? we should use more regex cleverness? */
                 var prefix = DOM.value.slice(0, DOM.selectionStart)
                 prefix = helper.continueFrom(prefix);
                 if(prefix) {
@@ -238,19 +273,19 @@ function Input(session, DOM, go) {
                 }
         }
 
-
         DOM.onkeydown = function(ev) { // Filter user keystrokes
                switch ( ev.keyCode ) {
                case 13 /*RETURN*/:
                         try { 
                                 var pane = new Pane(input, focus)
+                                DOM.value = ''
                                 go(pane); 
                         } 
                         catch(e) { alert(e); }
                         finally { return false; }
-                case 9 /*TAB*/:
-                        return tabcontinue()
-                }
+               case  9 /*TAB*/ : return tabcontinue()
+               case 38 /*UP*/  : return history(session, DOM, ev)
+               }
         }
 
         var pDOM = session.promptDOM
@@ -262,13 +297,14 @@ function Session(liveDOM, promptDOM, inputDOM, helpDOM) {
         var session = this
         var input = null
         var containerDOM = this.containerDOM = document.body
+        var panes = this.panes = []
         this.command_id = 0
         this.liveDOM = liveDOM
         this.helpDOM = helpDOM
         this.promptDOM = promptDOM
 
-
         function go(pane) {
+                panes.push(pane)
                 session.command_id++
                 containerDOM.insertBefore(pane.DOM, liveDOM)
                 input = session.input = new Input(session, inputDOM, go)
