@@ -20,8 +20,10 @@ var builtins = {
         }
 }
 
-function makePrompt(session) {
-        return document.createTextNode( session.command_id + '$ ' );
+/* Given the current session status, return a command prompt string. */
+function makePrompt(session) 
+{
+        return session.command_id + '$ ';
 }
 
 //-------------------------------------------------------
@@ -104,19 +106,25 @@ function Pane(input, gotit) {
                         document.createTextNode(command_text) :
                         document.createElement('span') 
                         );
- 
+                */
+        var pt = makePrompt(session) // FIX: do not use session
+        var ct = command_text.replace(/\s+/g, '') ? 
+                        command_text : '<span></span>'
         var snapDOM = document.createElement('div');
         snapDOM.setAttribute('class', 'snap');
+        snapDOM.innerHTML = "<span class=prompt>" + pt + "</span>" +
+                            "<span class=command>" + ct + "</span>"
+
+        /* FIX: shall it stay or shall it go?
         snapDOM.appendChild( promptDOM );
         snapDOM.appendChild( bannerDOM );
+        */
 
+        // pane == [prompt response]
         var DOM = this.DOM = document.createElement('div');
         DOM.setAttribute('class', 'pane');
         DOM.appendChild( snapDOM );
         
-
-        // callbacks/methods -- session is no longer frozen
-
         var contentDOM = null, shownDOM = null
         runCommand(id, command_text, function(respDOM){
                 if(respDOM) DOM.appendChild(contentDOM=shownDOM=respDOM)
@@ -318,7 +326,8 @@ function Input(session, DOM, go) {
         }
 
         var pDOM = session.promptDOM
-        pDOM.replaceChild(makePrompt(session), pDOM.firstChild)
+        var ptextDOM = document.createTextNode(makePrompt(session))
+        pDOM.replaceChild(ptextDOM, pDOM.firstChild)
         focus()
 }
 
