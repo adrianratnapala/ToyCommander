@@ -21,7 +21,7 @@ var builtins = {
 }
 
 /* Given the current session status, return a command prompt string. */
-function makePrompt(session) 
+function promptHTML(session) 
 {
         return session.command_id + '$ ';
 }
@@ -94,7 +94,7 @@ function Pane(input, gotit) {
         var command_text = this.command_text = input.DOM.value
         var id = this.id = input.id
 
-        var pt = makePrompt(session) // FIX: do not use session
+        var pt = input.promptHTML() 
         var ct = command_text.replace(/\s+/g, '') ? 
                         command_text : '<span></span>'
         var snapDOM = document.createElement('div');
@@ -308,8 +308,12 @@ function Input(session, DOM, go) {
                }
         }
 
+        this.promptHTML = function () {
+                return promptHTML(session)
+        }
+
         var pDOM = session.promptDOM
-        var ptextDOM = document.createTextNode(makePrompt(session))
+        var ptextDOM = document.createTextNode(this.promptHTML())
         pDOM.replaceChild(ptextDOM, pDOM.firstChild)
         focus()
 }
