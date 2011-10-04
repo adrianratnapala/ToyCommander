@@ -124,17 +124,12 @@ function Pane(input, gotit) {
 
 //-------------------------------------------------------
 
-// FIX: this function is senseless, fix continueFrom!
-/* if a == null, return b.  Otherwise return the common stem of both. ??? */
+/* Return the common stem of a, b */
 function streq(a,b) {
-        if( a == null )
-                return b
-
-        // FIX: surely there is a better way to implement  this.
-        var chars=[]
-        for (var k=0; k < a.length && a[k] == b[k]; k++) 
-                chars.push( a[k] )
-        return chars.join('')
+        a = a.slice(0, b.length)
+        for(j=0; j < a.length && a[j] == b[j]; j++)
+                ;
+        return a.slice(0, j)
 }
 
 function filterHelp(rdb, db, segs) {
@@ -205,12 +200,17 @@ function Helper (helpDOM) {
         }
 
         var continueFrom = this.continueFrom = function(prefix) {
-                var ext = null;
                 var segs = prefix.split(/\s/)
+
                 dlist = filterHelp(help_db, help_db, segs)
+                if(!dlist)
+                        return prefix
+
+                var k=0
+                var ext = dlist[0][0]
                 if ( dlist.length == 1 )
-                        ext = dlist[0][0] + ' '
-                else for(k in dlist) 
+                        ext += ' '
+                else for(var k=1; k < dlist.length; k++)
                         ext = streq(ext, dlist[k][0])
                 return prefix + ext.slice(segs.pop().length)
         }
